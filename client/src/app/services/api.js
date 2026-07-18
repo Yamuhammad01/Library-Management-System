@@ -59,4 +59,37 @@ export async function fetchCategoryData() {
   return data;
 }
 
+// ─── Books API ───
+
+export async function fetchBooks({ page = 1, limit = 8, search = "", category = "", status = "" } = {}) {
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+  if (search) params.set("search", search);
+  if (category) params.set("category", category);
+  if (status) params.set("status", status);
+  const { data } = await api.get(`/books?${params.toString()}`);
+  return data; // { books, total, page, totalPages }
+}
+
+export async function fetchBook(id) {
+  const { data } = await api.get(`/books/${id}`);
+  return data; // Book object
+}
+
+export async function createBook(bookData) {
+  const { data } = await api.post("/books", bookData);
+  return data; // { message, book }
+}
+
+export async function updateBook(id, bookData) {
+  const { data } = await api.put(`/books/${id}`, bookData);
+  return data; // { message, book }
+}
+
+export async function deleteBook(id) {
+  const { data } = await api.delete(`/books/${id}`);
+  return data; // { message }
+}
+
 export default api;

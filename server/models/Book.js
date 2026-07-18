@@ -17,8 +17,24 @@ const bookSchema = new mongoose.Schema(
     availableCopies: { type: Number, required: true, default: 1 },
     borrowCount: { type: Number, default: 0 },
     coverColor: { type: String, default: "#6D28D9" },
+    status: {
+      type: String,
+      enum: ["available", "low-stock", "checked-out", "reserved"],
+      default: "available",
+    },
   },
   { timestamps: true }
 );
+
+// Pre-save hook: auto-compute status based on availableCopies
+bookSchema.pre("save", function () {
+  if (this.availableCopies <= 0) {
+    this.status = "checked-out";
+  } else if (this.availableCopies <= 2) {
+    this.status = "low-stock";
+  } else {
+    this.status = "available";
+  }
+});
 
 module.exports = mongoose.model("Book", bookSchema);
