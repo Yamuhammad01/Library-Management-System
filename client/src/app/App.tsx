@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import LoginPage from "./LoginPage";
 import RegisterPage from "./RegisterPage";
 import BookCatalogPage from "./pages/BookCatalogPage";
+import BorrowingManagementPage from "./pages/BorrowingManagementPage";
 import {
   BookOpen, Search, Plus, Download, Eye, Pencil, Trash2,
   ChevronLeft, ChevronRight, X, AlertCircle, CheckCircle2,
@@ -22,6 +23,7 @@ import {
   useBorrowingActivity,
   useCategoryData,
 } from "./hooks/useDashboard";
+import { useBooks } from "./hooks/useBooks";
 import { fetchMe } from "./services/api";
 import {
   BookCover, BookStatusBadge, BorrowBadge, DaysLeftPill, CatBadge,
@@ -149,13 +151,17 @@ function Sidebar({ active, onNav, user, onLogout }: { active:ActiveSection; onNa
           {subItem("Authors",    false,               ()=>{})}
           {subItem("Publishers", false,               ()=>{})}
         </>}
-        {secHdr(<ArrowLeftRight size={15}/>, "Borrowing", borOpen, ()=>setBorOpen(!borOpen))}
-        {borOpen && <>
-          {subItem("Borrow Books",     active==="borrowing", ()=>onNav("borrowing"))}
-          {subItem("Return Books",     false,                ()=>onNav("borrowing"))}
-          {subItem("Borrowing History",false,                ()=>onNav("borrowing"))}
-          {subItem("Reservations",     false,                ()=>onNav("borrowing"))}
-        </>}
+        {(user.role === "Librarian" || user.role === "Admin") && (
+          <>
+            {secHdr(<ArrowLeftRight size={15}/>, "Borrowing", borOpen, ()=>setBorOpen(!borOpen))}
+            {borOpen && <>
+              {subItem("Borrow Books",     active==="borrowing", ()=>onNav("borrowing"))}
+              {subItem("Return Books",     false,                ()=>onNav("borrowing"))}
+              {subItem("Borrowing History",false,                ()=>onNav("borrowing"))}
+              {subItem("Reservations",     false,                ()=>onNav("borrowing"))}
+            </>}
+          </>
+        )}
         {secHdr(<Users size={15}/>, "Members", memOpen, ()=>setMemOpen(!memOpen))}
         {memOpen && <>
           {subItem("Students", false, ()=>{})}
@@ -219,235 +225,6 @@ function Shell({ children, active, onNav, user, onLogout }: { children:React.Rea
   );
 }
 
-/* ─────────────────── BORROWING PAGE ────────────────────────── */
-function BorrowingPage({ onIssue }: { onIssue: () => void }) {
-  const [records, setRecords] = useState<BorrowRecord[]>(SEED_BORROWS);
-  const [tab,     setTab]     = useState<BorrowTab>("active");
-  const [search,  setSearch]  = useState("");
-  const [pg,      setPg]      = useState(1);
-  const [toast,   setToast]   = useState<string | null>(null);
-  const PER = 7;
-
-  const showToast = (msg: string) => { setToast(msg); setTimeout(()=>setToast(null),2500); };
-
-  const stats = useMemo(()=>({
-    active:   records.filter(r=>r.status==="borrowed").length,
-    overdue:  records.filter(r=>r.status==="overdue").length,
-    dueWeek:  records.filter(r=>r.status==="borrowed"&&getDaysLeft(r.dueDate)>=0&&getDaysLeft(r.dueDate)<=7).length,
-    reserved: records.filter(r=>r.status==="reserved").length,
-  }),[records]);
-
-  const filtered = useMemo(()=>{
-    const q = search.toLowerCase();
-    return records.filter(r=>{
-      const matchTab =
-        tab==="active"       ? (r.status==="borrowed"||r.status==="overdue") :
-        tab==="history"      ? r.status==="returned" :
-        r.status==="reserved";
-      const matchQ = !q || r.memberName.toLowerCase().includes(q) ||
-        r.bookTitle.toLowerCase().includes(q) || r.memberId.toLowerCase().includes(q);
-      return matchTab && matchQ;
-    });
-  },[records,tab,search]);
-
-  const totalPg = Math.max(1,Math.ceil(filtered.length/PER));
-  const paged   = filtered.slice((pg-1)*PER,pg*PER);
-
-  const handleReturn = (id:number) => {
-    setRecords(p=>p.map(r=>r.id===id?{...r,status:"returned",returnDate:TODAY}:r));
-    showToast("Book marked as returned successfully.");
-  };
-  const handleRenew = (id:number) => {
-    setRecords(p=>p.map(r=>r.id===id?{...r,dueDate:addDays(r.dueDate,14),status:"borrowed"}:r));
-    showToast("Loan renewed for 14 additional days.");
-  };
-
-  const tabDef: {id:BorrowTab; label:string; count:number}[] = [
-    {id:"active",       label:"Active Borrowings", count:stats.active+stats.overdue},
-    {id:"history",      label:"Borrow History",    count:records.filter(r=>r.status==="returned").length},
-    {id:"reservations", label:"Reservations",      count:stats.reserved},
-  ];
-
-  const STAT_CARDS = [
-    {label:"Active Borrowings", value:stats.active,   icon:<BookMarked size={20}/>,  bg:"#EDE9FE", color:PUR,       trend:"+3 today"},
-    {label:"Overdue",           value:stats.overdue,  icon:<AlertTriangle size={20}/>,bg:"#FEF2F2", color:"#DC2626", trend:"Needs attention"},
-    {label:"Due This Week",     value:stats.dueWeek,  icon:<Clock size={20}/>,        bg:"#FFF7ED", color:"#D97706", trend:"Within 7 days"},
-    {label:"Reservations",      value:stats.reserved, icon:<ClipboardList size={20}/>,bg:"#EFF6FF", color:"#2563EB", trend:"Awaiting pickup"},
-  ];
-
-  return (
-    <div className="p-6 flex flex-col gap-5">
-      {/* Toast */}
-      {toast && (
-        <div className="fixed top-5 right-5 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-xl"
-          style={{background:"#1F2937",color:"#fff",fontSize:13,fontWeight:500,minWidth:280}}>
-          <CheckCircle2 size={15} style={{color:"#10B981",flexShrink:0}}/>{toast}
-        </div>
-      )}
-
-      {/* Page header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="font-extrabold text-xl text-gray-900">Borrowing Management</h1>
-          <p className="text-xs text-gray-400 mt-0.5">Library Catalog › Borrowing › Overview</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="flex items-center gap-1.5 text-sm font-semibold text-gray-600 px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50">
-            <Download size={14}/> Export
-          </button>
-          <button onClick={onIssue}
-            className="flex items-center gap-1.5 text-sm font-semibold text-white px-4 py-2 rounded-xl hover:opacity-90"
-            style={{background:PUR,boxShadow:"0 4px 14px rgba(109,40,217,0.3)"}}>
-            <BookPlus size={14}/> Issue a Book
-          </button>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid gap-4" style={{gridTemplateColumns:"repeat(4,1fr)"}}>
-        {STAT_CARDS.map(s=>(
-          <div key={s.label} className="rounded-xl p-4 flex flex-col justify-between"
-            style={{background:"#fff",boxShadow:"0 1px 6px rgba(0,0,0,0.06)",minHeight:115}}>
-            <div className="flex items-start justify-between">
-              <p className="text-xs font-medium text-gray-500">{s.label}</p>
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                style={{background:s.bg,color:s.color}}>{s.icon}</div>
-            </div>
-            <div>
-              <p className="text-3xl font-extrabold leading-tight" style={{color:s.color}}>{s.value}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{s.trend}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Table card */}
-      <div className="rounded-2xl flex flex-col" style={{background:"#fff",boxShadow:"0 2px 12px rgba(0,0,0,0.07)",border:"1px solid rgba(0,0,0,0.05)"}}>
-        {/* Tab bar + search */}
-        <div className="flex items-center justify-between px-4 pt-4 pb-0 border-b border-gray-100">
-          <div className="flex items-center gap-0">
-            {tabDef.map(t=>(
-              <button key={t.id} onClick={()=>{setTab(t.id);setPg(1);}}
-                className="flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-colors relative"
-                style={{color:tab===t.id?PUR:"#6B7280"}}>
-                {t.label}
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full"
-                  style={{background:tab===t.id?PUR:"#F3F4F6",color:tab===t.id?"#fff":"#6B7280"}}>
-                  {t.count}
-                </span>
-                {tab===t.id&&<div className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full" style={{background:PUR}}/>}
-              </button>
-            ))}
-          </div>
-          <div className="relative pb-2">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"/>
-            <input value={search} onChange={e=>{setSearch(e.target.value);setPg(1);}}
-              placeholder="Search member or book…"
-              className="text-sm outline-none rounded-xl border border-gray-200 bg-gray-50 focus:border-purple-600"
-              style={{padding:"8px 12px 8px 30px",width:240}}/>
-          </div>
-        </div>
-
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm" style={{borderCollapse:"collapse",minWidth:860}}>
-            <thead>
-              <tr style={{background:"#FAFAFA",borderBottom:"1px solid #F3F4F6"}}>
-                {["Member","Book","Borrow Date", tab==="history"?"Return Date":"Due Date","Days / Status","Status","Actions"].map(h=>(
-                  <th key={h} className="text-left font-semibold text-gray-400 py-3"
-                    style={{fontSize:11,letterSpacing:"0.05em",padding:"12px 16px",whiteSpace:"nowrap"}}>
-                    {h.toUpperCase()}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {paged.length===0
-                ? <tr><td colSpan={7} className="text-center py-16 text-gray-400 text-sm">No records found.</td></tr>
-                : paged.map((r,i)=>{
-                  const isOverdue = r.status==="overdue";
-                  return (
-                    <tr key={r.id}
-                      style={{borderBottom:"1px solid #F9FAFB",
-                        background: isOverdue ? "#FFFBFB" : i%2===0?"#fff":"#FAFAFA"}}
-                      className="hover:bg-purple-50 transition-colors">
-                      {/* Member */}
-                      <td style={{padding:"10px 16px"}}>
-                        <div className="flex items-center gap-2.5">
-                          <Avatar name={r.memberName} size={32}/>
-                          <div>
-                            <p className="text-xs font-semibold text-gray-900 leading-tight">{r.memberName}</p>
-                            <p className="text-xs text-gray-400">{r.memberId}</p>
-                            <span style={{fontSize:10,fontWeight:700,
-                              background:r.memberType==="staff"?"#FFF7ED":"#F5F3FF",
-                              color:r.memberType==="staff"?"#D97706":PUR,
-                              padding:"1px 6px",borderRadius:8}}>
-                              {r.memberType}
-                            </span>
-                          </div>
-                        </div>
-                      </td>
-                      {/* Book */}
-                      <td style={{padding:"10px 16px"}}>
-                        <div className="flex items-center gap-2">
-                          <div className="w-5 h-7 rounded flex items-center justify-center text-white font-bold shrink-0"
-                            style={{background:r.bookCoverColor,fontSize:10}}>{r.bookTitle.charAt(0)}</div>
-                          <div>
-                            <p className="text-xs font-semibold text-gray-900 leading-tight" style={{maxWidth:160}}>{r.bookTitle}</p>
-                            <p className="text-xs text-gray-400" style={{fontFamily:"monospace"}}>{r.isbn}</p>
-                          </div>
-                        </div>
-                      </td>
-                      {/* Borrow Date */}
-                      <td style={{padding:"10px 16px",fontSize:12,color:"#6B7280",whiteSpace:"nowrap"}}>{fmtDate(r.borrowDate)}</td>
-                      {/* Due / Return Date */}
-                      <td style={{padding:"10px 16px",fontSize:12,color:"#6B7280",whiteSpace:"nowrap"}}>
-                        {tab==="history" ? fmtDate(r.returnDate||"") : fmtDate(r.dueDate)}
-                      </td>
-                      {/* Days Left */}
-                      <td style={{padding:"10px 16px"}}>
-                        <DaysLeftPill dueDate={r.dueDate} status={r.status}/>
-                        {r.status==="reserved"  && <span style={{fontSize:10,fontWeight:700,background:"#EFF6FF",color:"#2563EB",padding:"2px 7px",borderRadius:10}}>Awaiting</span>}
-                        {r.status==="returned"  && <span style={{fontSize:10,fontWeight:700,background:"#ECFDF5",color:"#059669",padding:"2px 7px",borderRadius:10}}>{fmtDate(r.returnDate||"")}</span>}
-                      </td>
-                      {/* Status */}
-                      <td style={{padding:"10px 16px"}}><BorrowBadge status={r.status}/></td>
-                      {/* Actions */}
-                      <td style={{padding:"10px 16px"}}>
-                        <div className="flex items-center gap-1">
-                          {(r.status==="borrowed"||r.status==="overdue") && <>
-                            <IconBtn color="#059669" title="Return Book" onClick={()=>handleReturn(r.id)}><RotateCcw size={12}/></IconBtn>
-                            {r.status==="borrowed" && <IconBtn color="#D97706" title="Renew Loan" onClick={()=>handleRenew(r.id)}><RefreshCw size={12}/></IconBtn>}
-                          </>}
-                          {r.status==="reserved" && <IconBtn color={PUR} title="Issue Book" onClick={()=>handleReturn(r.id)}><BookPlus size={12}/></IconBtn>}
-                          <IconBtn color="#6B7280" title="View Record"><Eye size={12}/></IconBtn>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              }
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-          <p className="text-xs text-gray-500">
-            Showing <strong>{filtered.length===0?0:(pg-1)*PER+1}–{Math.min(pg*PER,filtered.length)}</strong> of <strong>{filtered.length}</strong> records
-          </p>
-          <div className="flex items-center gap-1">
-            <PageBtn disabled={pg===1}       onClick={()=>setPg(p=>p-1)}><ChevronLeft size={14}/></PageBtn>
-            {Array.from({length:totalPg},(_,i)=>i+1).map(n=>(
-              <PageBtn key={n} active={n===pg} onClick={()=>setPg(n)}>{n}</PageBtn>
-            ))}
-            <PageBtn disabled={pg===totalPg} onClick={()=>setPg(p=>p+1)}><ChevronRight size={14}/></PageBtn>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* ─────────────────── ISSUE BOOK PAGE ──────────────────────── */
 function IssueBookPage({ onBack }: { onBack: () => void }) {
@@ -463,11 +240,14 @@ function IssueBookPage({ onBack }: { onBack: () => void }) {
 
   const dueDate = useMemo(()=>addDays(borrowDate,loanDays),[borrowDate,loanDays]);
 
+  const { data: booksData } = useBooks({ search: bookQ, status: "Available" });
+  const availableBooks = booksData?.books || [];
+
   const filteredMembers = MOCK_MEMBERS.filter(m=>{
     const q=memberQ.toLowerCase();
     return !q || m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q) || m.department.toLowerCase().includes(q);
   });
-  const filteredBooks = [] as Book[]; // Books will come from API in the IssueBookPage - keep as empty array for now
+  const filteredBooks = availableBooks.filter((b: Book) => b.availableCopies > 0);
 
   const handleIssue = () => {
     const e: typeof errors = {};
@@ -495,21 +275,23 @@ function IssueBookPage({ onBack }: { onBack: () => void }) {
     </button>
   );
 
-  const BookRow = ({ b }: { b: Book }) => (
-    <button onClick={()=>{setBook(b);setBookQ("");setErrors(p=>({...p,book:undefined}));}}
-      className="flex items-center gap-2.5 w-full px-3 py-2.5 hover:bg-purple-50 transition-colors text-left border-b border-gray-50 last:border-0">
-      <BookCover color={b.coverColor} title={b.title} size="sm"/>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold text-gray-900 leading-tight truncate">{b.title}</p>
-        <p className="text-xs text-gray-400 truncate">{b.author.split(",")[0]}</p>
-        <p className="text-xs" style={{fontFamily:"monospace",color:"#9CA3AF"}}>{b.isbn}</p>
-      </div>
-      <div className="text-right shrink-0">
-        <p className="text-xs font-bold" style={{color:"#059669"}}>{b.availableCopies} avail.</p>
-        <CatBadge label={b.category}/>
-      </div>
-    </button>
-  );
+  function BookRow({ book }: { book: Book }) {
+    return (
+      <button key={book.isbn} onClick={()=>{setBook(book);setBookQ("");setErrors(p=>({...p,book:undefined}));}}
+        className="flex items-center gap-2.5 w-full px-3 py-2.5 hover:bg-purple-50 transition-colors text-left border-b border-gray-50 last:border-0">
+        <BookCover color={book.coverColor} title={book.title} size="sm"/>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold text-gray-900 leading-tight truncate">{book.title}</p>
+          <p className="text-xs text-gray-400 truncate">{book.author.split(",")[0]}</p>
+          <p className="text-xs" style={{fontFamily:"monospace",color:"#9CA3AF"}}>{book.isbn}</p>
+        </div>
+        <div className="text-right shrink-0">
+          <p className="text-xs font-bold" style={{color:"#059669"}}>{book.availableCopies} avail.</p>
+          <CatBadge label={book.category}/>
+        </div>
+      </button>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -592,7 +374,7 @@ function IssueBookPage({ onBack }: { onBack: () => void }) {
                 <div className="rounded-xl border border-gray-100 overflow-hidden" style={{maxHeight:240,overflowY:"auto"}}>
                   {filteredBooks.length===0
                     ? <p className="text-xs text-gray-400 text-center py-6">No available books found.</p>
-                    : filteredBooks.map(b=><BookRow key={b.isbn} b={b}/>)
+                    : filteredBooks.map((b)=> <BookRow key={b.isbn} book={b}/>)
                   }
                 </div>
               </div>
@@ -857,8 +639,12 @@ function AppContent() {
         ? <BookCatalogPage userRole={user.role} />
         : null
       }
-      {view==="borrowing" && <BorrowingPage onIssue={goIssue}/>}
-      {view==="issue"     && <IssueBookPage onBack={goBorrowing}/>}
+      {(view==="borrowing" || view==="issue") && (user.role === "Librarian" || user.role === "Admin") && (
+        <>
+          {view==="borrowing" && <BorrowingManagementPage onIssue={goIssue}/>}
+          {view==="issue"     && <IssueBookPage onBack={goBorrowing}/>}
+        </>
+      )}
     </Shell>
   );
 }

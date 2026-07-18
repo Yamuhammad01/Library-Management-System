@@ -92,4 +92,47 @@ export async function deleteBook(id) {
   return data; // { message }
 }
 
+// ─── Borrowing API ───
+
+export async function fetchBorrowRecords({ page = 1, limit = 10, search = "", status = "", memberType = "" } = {}) {
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+  if (search) params.set("search", search);
+  if (status) params.set("status", status);
+  if (memberType) params.set("memberType", memberType);
+  const { data } = await api.get(`/borrowing?${params.toString()}`);
+  return data; // { records, total, page, totalPages }
+}
+
+export async function fetchBorrowRecord(id) {
+  const { data } = await api.get(`/borrowing/${id}`);
+  return data; // BorrowRecord object
+}
+
+export async function createBorrowRecord(recordData) {
+  const { data } = await api.post("/borrowing", recordData);
+  return data; // { message, record }
+}
+
+export async function updateBorrowRecord(id, recordData) {
+  const { data } = await api.put(`/borrowing/${id}`, recordData);
+  return data; // { message, record }
+}
+
+export async function returnBook(id) {
+  const { data } = await api.post(`/borrowing/${id}/return`);
+  return data; // { message, record }
+}
+
+export async function renewLoan(id, dueDate) {
+  const { data } = await api.post(`/borrowing/${id}/renew`, { dueDate });
+  return data; // { message, record }
+}
+
+export async function deleteBorrowRecord(id) {
+  const { data } = await api.delete(`/borrowing/${id}`);
+  return data; // { message }
+}
+
 export default api;
