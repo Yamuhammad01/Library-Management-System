@@ -1,33 +1,22 @@
 import { useState } from "react";
 import { BookOpen, Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
+import { loginUser } from "./services/api";
 
 const PUR = "#6D28D9";
 
-interface SeededUser {
-  email: string;
-  password: string;
-  name: string;
-  role: string;
-}
-
-const SEEDED_USERS: SeededUser[] = [
-  { email: "admin@unilib.edu",   password: "admin123",   name: "Abdullahi Mustapha",    role: "Head Librarian" },
-  { email: "librarian@unilib.edu", password: "lib123",   name: "James Wilson",   role: "Librarian" },
-  { email: "staff@unilib.edu",  password: "staff123",    name: "Aisha Rahman",   role: "Library Staff" },
-];
-
 interface LoginPageProps {
   onLogin: (user: { name: string; role: string; email: string }) => void;
+  onGoToRegister: () => void;
 }
 
-export default function LoginPage({ onLogin }: LoginPageProps) {
+export default function LoginPage({ onLogin, onGoToRegister }: LoginPageProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -38,24 +27,22 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
     setLoading(true);
 
-    // Simulate network delay
-    setTimeout(() => {
-      const user = SEEDED_USERS.find(
-        (u) => u.email === email.trim().toLowerCase() && u.password === password
-      );
-
-      if (user) {
-        onLogin({ name: user.name, role: user.role, email: user.email });
-      } else {
-        setError("Invalid email or password. Please try again.");
-        setLoading(false);
-      }
-    }, 600);
+    try {
+      const data = await loginUser(email.trim().toLowerCase(), password);
+      // Save token
+      localStorage.setItem("unilib_token", data.token);
+      onLogin({ name: data.user.fullName, role: data.user.role, email: data.user.email });
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || "Invalid email or password. Please try again.";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const quickFill = (u: SeededUser) => {
-    setEmail(u.email);
-    setPassword(u.password);
+  const quickFill = (email: string, password: string) => {
+    setEmail(email);
+    setPassword(password);
     setError(null);
   };
 
@@ -264,8 +251,26 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             </button>
           </form>
 
+          {/* Register link */}
+          <div style={{ marginTop: 16, textAlign: "center" }}>
+            <button
+              onClick={onGoToRegister}
+              style={{
+                background: "none",
+                border: "none",
+                color: PUR,
+                fontWeight: 600,
+                cursor: "pointer",
+                fontSize: 13,
+                padding: 0,
+              }}
+            >
+              Don't have an account? Register here
+            </button>
+          </div>
+
           {/* Quick login buttons */}
-          <div style={{ marginTop: 28 }}>
+          <div style={{ marginTop: 24 }}>
             <p
               style={{
                 fontSize: 11,
@@ -279,10 +284,13 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               QUICK LOGIN (DEMO)
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {SEEDED_USERS.map((u) => (
+              {[
+                { name: "Sarah Johnson (Librarian)", email: "librarian@unilib.edu", password: "password123" },
+                { name: "Admin User (Admin)", email: "admin@unilib.edu", password: "admin123" },
+              ].map((u) => (
                 <button
                   key={u.email}
-                  onClick={() => quickFill(u)}
+                  onClick={() => quickFill(u.email, u.password)}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -307,7 +315,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 >
                   <div>
                     <span style={{ fontWeight: 600, color: "#374151" }}>{u.name}</span>
-                    <span style={{ color: "#9CA3AF", marginLeft: 6 }}>({u.role})</span>
                   </div>
                   <span style={{ fontSize: 10, color: PUR, fontWeight: 600 }}>
                     Fill →

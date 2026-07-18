@@ -4,6 +4,7 @@ const connectDB = require("./config/db");
 const Book = require("./models/Book");
 const Member = require("./models/Member");
 const BorrowRecord = require("./models/BorrowRecord");
+const User = require("./models/User");
 
 // ─── Data from the frontend mock ───
 
@@ -133,7 +134,20 @@ async function seed() {
     const inserted = await BorrowRecord.insertMany(borrowRecords);
     console.log(`Inserted ${inserted.length} borrow records.`);
 
+    // Seed users
+    await User.deleteMany({});
+    const seededUsers = [
+      { fullName: "Sarah Johnson", email: "librarian@unilib.edu", password: "password123", role: "Librarian" },
+      { fullName: "Admin User", email: "admin@unilib.edu", password: "admin123", role: "Admin" },
+    ];
+    for (const u of seededUsers) {
+      await User.create(u);
+    }
+    console.log(`Inserted ${seededUsers.length} users (Librarian + Admin).`);
+
     console.log("\n Seed completed successfully!");
+    console.log("Librarian login: librarian@unilib.edu / password123");
+    console.log(" Admin login:     admin@unilib.edu / admin123");
     process.exit(0);
   } catch (err) {
     console.error(" Seed failed:", err);

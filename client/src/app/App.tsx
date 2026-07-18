@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import LoginPage from "./LoginPage";
+import RegisterPage from "./RegisterPage";
 import {
   BookOpen, Search, Plus, Download, Eye, Pencil, Trash2,
   ChevronLeft, ChevronRight, X, AlertCircle, CheckCircle2,
@@ -20,6 +21,7 @@ import {
   useBorrowingActivity,
   useCategoryData,
 } from "./hooks/useDashboard";
+import { fetchMe } from "./services/api";
 
 /* ─────────────────────────── TYPES ─────────────────────────── */
 type BookStatus    = "available" | "low-stock" | "checked-out" | "reserved";
@@ -1304,14 +1306,32 @@ function AppContent() {
   const [view,    setView]   = useState<View>("borrowing");
   const [selBook, setSel]    = useState<Book|null>(null);
   const [editOrig,setOrig]   = useState<BFD|null>(null);
+  const [showRegister, setShowRegister] = useState(false);
+
+  // Token persistence: check for existing token on mount
+  useEffect(() => {
+    const token = localStorage.getItem("unilib_token");
+    if (token) {
+      fetchMe()
+        .then((data) => {
+          setUser({ name: data.user.fullName, role: data.user.role, email: data.user.email });
+          setView("dashboard");
+        })
+        .catch(() => {
+          localStorage.removeItem("unilib_token");
+        });
+    }
+  }, []);
 
   const handleLogin = (u: {name:string;role:string;email:string}) => {
     setUser(u);
     setView("dashboard");
+    setShowRegister(false);
   };
 
   const handleLogout = () => {
     setUser(null);
+    localStorage.removeItem("unilib_token");
     setView("borrowing");
   };
 
@@ -1334,7 +1354,10 @@ function AppContent() {
     "borrowing";
 
   if (!user) {
-    return <LoginPage onLogin={handleLogin}/>;
+    if (showRegister) {
+      return <RegisterPage onBackToLogin={() => setShowRegister(false)} />;
+    }
+    return <LoginPage onLogin={handleLogin} onGoToRegister={() => setShowRegister(true)} />;
   }
 
   return (
