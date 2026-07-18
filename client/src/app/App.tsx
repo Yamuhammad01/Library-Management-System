@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import LoginPage from "./LoginPage";
 import {
   BookOpen, Search, Plus, Download, Eye, Pencil, Trash2,
@@ -14,6 +15,11 @@ import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
 } from "recharts";
+import {
+  useDashboardStats,
+  useBorrowingActivity,
+  useCategoryData,
+} from "./hooks/useDashboard";
 
 /* ─────────────────────────── TYPES ─────────────────────────── */
 type BookStatus    = "available" | "low-stock" | "checked-out" | "reserved";
@@ -1199,16 +1205,38 @@ function IssueBookPage({ onBack }: { onBack: () => void }) {
 }
 
 /* ─────────────────── DASHBOARD OVERVIEW ────────────────────── */
-const borrowData = [{m:"Jan",b:420,r:365},{m:"Feb",b:510,r:478},{m:"Mar",b:465,r:502},{m:"Apr",b:620,r:585},{m:"May",b:575,r:532},{m:"Jun",b:690,r:641},{m:"Jul",b:718,r:680}];
-const catData    = [{n:"CS",v:820},{n:"Bio",v:630},{n:"Eco",v:510},{n:"Math",v:1120},{n:"Phy",v:440},{n:"Chem",v:780},{n:"Med",v:370}];
+function StatCard({ label, value, icon, bg, color, loading, error }:{ label:string; value:string|number; icon:React.ReactNode; bg:string; color:string; loading?:boolean; error?:boolean }) {
+  return (
+    <div className="rounded-xl p-4 flex flex-col justify-between" style={{background:"#fff",boxShadow:"0 1px 6px rgba(0,0,0,0.06)",minHeight:130}}>
+      <div className="flex items-start justify-between">
+        <p className="text-xs font-medium text-gray-500">{label}</p>
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{background:bg,color}}>{icon}</div>
+      </div>
+      <div>
+        {loading ? (
+          <div className="h-7 w-20 rounded bg-gray-200 animate-pulse mt-1"/>
+        ) : error ? (
+          <p className="text-sm text-red-500">Failed to load</p>
+        ) : (
+          <p className="text-2xl font-bold text-gray-900 leading-tight">{value}</p>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function DashboardOverview({ onGoBooks, onGoBorrowing }:{ onGoBooks:()=>void; onGoBorrowing:()=>void }) {
-  const STATS = [
-    {label:"Total Books",      value:"24,856",growth:"+8.3%", up:true, icon:<BookCopy size={20}/>,       bg:"#EDE9FE",color:PUR},
-    {label:"Active Borrowers", value:"4,210", growth:"+12.4%",up:true, icon:<GraduationCap size={20}/>,   bg:"#FFF7ED",color:"#D97706"},
-    {label:"Books Borrowed",   value:"1,847", growth:"+5.7%", up:true, icon:<BookMarked size={20}/>,      bg:"#ECFDF5",color:"#059669"},
-    {label:"Overdue Returns",  value:"124",   growth:"-3.2%", up:false,icon:<AlertCircle size={20}/>,     bg:"#FEF2F2",color:"#DC2626"},
+  const { data: stats, isLoading: statsLoading, isError: statsError } = useDashboardStats();
+  const { data: activity, isLoading: activityLoading } = useBorrowingActivity();
+  const { data: categories, isLoading: catLoading } = useCategoryData();
+
+  const STATS_DEFS = [
+    {label:"Total Books",      value:stats?.totalBooks ?? "—", icon:<BookCopy size={20}/>,       bg:"#EDE9FE", color:PUR},
+    {label:"Active Borrowers", value:stats?.activeBorrowers ?? "—", icon:<GraduationCap size={20}/>,   bg:"#FFF7ED", color:"#D97706"},
+    {label:"Books Borrowed",   value:stats?.booksBorrowed ?? "—", icon:<BookMarked size={20}/>,      bg:"#ECFDF5", color:"#059669"},
+    {label:"Overdue Returns",  value:stats?.overdueReturns ?? "—", icon:<AlertCircle size={20}/>,     bg:"#FEF2F2", color:"#DC2626"},
   ];
+
   return (
     <div className="p-6 flex flex-col gap-5">
       <div className="flex items-start justify-between">
@@ -1219,38 +1247,49 @@ function DashboardOverview({ onGoBooks, onGoBorrowing }:{ onGoBooks:()=>void; on
         </div>
       </div>
       <div className="grid gap-4" style={{gridTemplateColumns:"repeat(4,1fr)"}}>
-        {STATS.map(s=>(
-          <div key={s.label} className="rounded-xl p-4 flex flex-col justify-between" style={{background:"#fff",boxShadow:"0 1px 6px rgba(0,0,0,0.06)",minHeight:130}}>
-            <div className="flex items-start justify-between"><p className="text-xs font-medium text-gray-500">{s.label}</p><div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{background:s.bg,color:s.color}}>{s.icon}</div></div>
-            <div><p className="text-2xl font-bold text-gray-900 leading-tight">{s.value}</p><div className="flex items-center gap-1 mt-1">{s.up?<TrendingUp size={12} style={{color:"#10B981"}}/>:<TrendingDown size={12} style={{color:"#EF4444"}}/>}<span className="text-xs font-semibold" style={{color:s.up?"#10B981":"#EF4444"}}>{s.growth}</span></div></div>
-          </div>
+        {STATS_DEFS.map(s=>(
+          <StatCard key={s.label} {...s} loading={statsLoading} error={statsError}/>
         ))}
       </div>
       <div className="grid gap-4" style={{gridTemplateColumns:"1fr 320px"}}>
         <div className="rounded-xl p-4" style={{background:"#fff",boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
           <div className="flex items-center justify-between mb-3"><p className="text-sm font-semibold text-gray-800">Borrowing Activity</p><MoreVertical size={16} className="text-gray-400"/></div>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={borrowData} margin={{top:4,right:4,left:-28,bottom:0}}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6"/>
-              <XAxis dataKey="m" tick={{fontSize:10,fill:"#9CA3AF"}} axisLine={false} tickLine={false}/>
-              <YAxis tick={{fontSize:10,fill:"#9CA3AF"}} axisLine={false} tickLine={false}/>
-              <Tooltip/>
-              <Line type="monotone" dataKey="b" name="Borrowed" stroke={PUR} strokeWidth={2.5} dot={false}/>
-              <Line type="monotone" dataKey="r" name="Returned" stroke="#D1D5DB" strokeWidth={2} dot={false}/>
-            </LineChart>
-          </ResponsiveContainer>
+          {activityLoading ? (
+            <div className="h-[200px] flex items-center justify-center text-gray-400 text-sm">Loading chart...</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={activity || []} margin={{top:4,right:4,left:-28,bottom:0}}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6"/>
+                <XAxis dataKey="m" tick={{fontSize:10,fill:"#9CA3AF"}} axisLine={false} tickLine={false}/>
+                <YAxis tick={{fontSize:10,fill:"#9CA3AF"}} axisLine={false} tickLine={false}/>
+                <Tooltip/>
+                <Line type="monotone" dataKey="b" name="Borrowed" stroke={PUR} strokeWidth={2.5} dot={false}/>
+                <Line type="monotone" dataKey="r" name="Returned" stroke="#D1D5DB" strokeWidth={2} dot={false}/>
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+          {activity && activity.length === 0 && !activityLoading && (
+            <p className="text-center text-gray-400 text-sm py-8">No borrowing activity data yet.</p>
+          )}
         </div>
         <div className="rounded-xl p-4" style={{background:"#fff",boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
           <p className="text-sm font-semibold text-gray-800 mb-3">By Category</p>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={catData} margin={{top:4,right:4,left:-28,bottom:0}} barCategoryGap="30%">
-              <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false}/>
-              <XAxis dataKey="n" tick={{fontSize:10,fill:"#9CA3AF"}} axisLine={false} tickLine={false}/>
-              <YAxis tick={{fontSize:10,fill:"#9CA3AF"}} axisLine={false} tickLine={false}/>
-              <Tooltip/>
-              <Bar dataKey="v" name="Borrowed" fill={PUR} radius={[4,4,0,0]}/>
-            </BarChart>
-          </ResponsiveContainer>
+          {catLoading ? (
+            <div className="h-[200px] flex items-center justify-center text-gray-400 text-sm">Loading chart...</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={categories || []} margin={{top:4,right:4,left:-28,bottom:0}} barCategoryGap="30%">
+                <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false}/>
+                <XAxis dataKey="n" tick={{fontSize:10,fill:"#9CA3AF"}} axisLine={false} tickLine={false}/>
+                <YAxis tick={{fontSize:10,fill:"#9CA3AF"}} axisLine={false} tickLine={false}/>
+                <Tooltip/>
+                <Bar dataKey="v" name="Borrowed" fill={PUR} radius={[4,4,0,0]}/>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+          {categories && categories.length === 0 && !catLoading && (
+            <p className="text-center text-gray-400 text-sm py-8">No category data yet.</p>
+          )}
         </div>
       </div>
     </div>
@@ -1258,7 +1297,9 @@ function DashboardOverview({ onGoBooks, onGoBorrowing }:{ onGoBooks:()=>void; on
 }
 
 /* ──────────────────────── APP ROOT ─────────────────────────── */
-export default function App() {
+const queryClient = new QueryClient();
+
+function AppContent() {
   const [user, setUser] = useState<{name:string;role:string;email:string}|null>(null);
   const [view,    setView]   = useState<View>("borrowing");
   const [selBook, setSel]    = useState<Book|null>(null);
@@ -1306,5 +1347,13 @@ export default function App() {
       {view==="borrowing" && <BorrowingPage onIssue={goIssue}/>}
       {view==="issue"     && <IssueBookPage onBack={goBorrowing}/>}
     </Shell>
+  );
+}
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppContent />
+    </QueryClientProvider>
   );
 }
