@@ -7,19 +7,25 @@ const {
   createBorrowRecord,
   updateBorrowRecord,
   returnBook,
+  getReturnStats,
   renewLoan,
   deleteBorrowRecord,
 } = require("../controllers/borrowingController");
 
-// All borrowing routes require authentication + Librarian/Admin role
+// All borrowing routes require authentication
 router.use(authenticate);
+
+// Return management endpoints (Librarian only)
+router.get("/return-stats", authorize("Librarian"), getReturnStats);
+router.post("/:id/return", authorize("Librarian"), returnBook);
+
+// General borrowing routes require authentication + Librarian/Admin role
 router.use(authorize("Librarian", "Admin"));
 
 router.get("/", listBorrowRecords);
 router.get("/:id", getBorrowRecord);
 router.post("/", createBorrowRecord);
 router.put("/:id", updateBorrowRecord);
-router.post("/:id/return", returnBook);
 router.post("/:id/renew", renewLoan);
 router.delete("/:id", deleteBorrowRecord);
 

@@ -8,18 +8,23 @@ const Book = require("../models/Book");
 async function listBorrowRecords({ page = 1, limit = 10, search = "", status = "", memberType = "" }) {
   const filter = {};
 
-  // Search across memberName, bookTitle, memberId
+  // Search across memberName, bookTitle, memberId, isbn
   if (search.trim()) {
     const q = search.trim();
     filter.$or = [
       { memberName: { $regex: q, $options: "i" } },
       { bookTitle: { $regex: q, $options: "i" } },
       { memberId: { $regex: q, $options: "i" } },
+      { isbn: { $regex: q, $options: "i" } },
     ];
   }
 
   if (status.trim()) {
-    filter.status = status;
+    if (status === "active") {
+      filter.status = { $in: ["borrowed", "overdue"] };
+    } else {
+      filter.status = status;
+    }
   }
 
   if (memberType.trim()) {
@@ -179,7 +184,7 @@ async function updateBorrowRecord(id, data) {
 /**
  * Return a book.
  */
-async function returnBook(id) {
+async function returnBook(id, data = {}) {
   const record = await BorrowRecord.findById(id);
   if (!record) {
     const err = new Error("Borrow record not found.");
@@ -193,19 +198,52 @@ async function returnBook(id) {
     throw err;
   }
 
+  const { condition = "good", notes = "" } = data;
+
   // Update record
   record.status = "returned";
   record.returnDate = new Date();
+  record.condition = condition;
+  record.notes = notes;
   await record.save();
 
-  // Increment available copies
+  // Increment available copies or adjust total copies if lost
   const book = await Book.findById(record.bookId);
   if (book) {
-    book.availableCopies += 1;
+    if (condition === "lost") {
+      book.totalCopies = Math.max(0, book.totalCopies - 1);
+    } else {
+      book.availableCopies = Math.min(book.totalCopies, book.availableCopies + 1);
+    }
     await book.save();
   }
 
   return record;
+}
+
+/**
+ * Get Return Management statistics.
+ */
+async function getReturnStats() {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const todayEnd = new Date();
+  todayEnd.setHours(23, 59, 59, 999);
+
+  const active = await BorrowRecord.countDocuments({ status: "borrowed" });
+  const overdue = await BorrowRecord.countDocuments({ status: "overdue" });
+
+  const returnedToday = await BorrowRecord.countDocuments({
+    status: "returned",
+    returnDate: { $gte: todayStart, $lte: todayEnd },
+  });
+
+  return {
+    active,
+    overdue,
+    returnedToday,
+  };
 }
 
 /**
@@ -269,6 +307,7 @@ module.exports = {
   createBorrowRecord,
   updateBorrowRecord,
   returnBook,
+  getReturnStats,
   renewLoan,
   deleteBorrowRecord,
 };

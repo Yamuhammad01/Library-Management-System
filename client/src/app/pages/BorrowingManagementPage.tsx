@@ -3,7 +3,7 @@ import {
   BookOpen, Search, Plus, Download, Eye, Pencil, Trash2,
   ChevronLeft, ChevronRight, X, AlertCircle, CheckCircle2,
   ArrowLeft, Calendar, Hash, User, MoreVertical, Check, RotateCcw, RefreshCw,
-  ClipboardList, UserCheck, BookPlus, AlertTriangle, Clock, BadgeCheck,
+  ClipboardList, UserCheck, BookPlus, AlertTriangle, Clock, BadgeCheck, BookMarked,
 } from "lucide-react";
 import {
   useBorrowRecords,
@@ -121,7 +121,7 @@ export default function BorrowingManagementPage({ onIssue }: { onIssue: () => vo
 
   const tabDef: { id: BorrowTab; label: string; count: number }[] = [
     { id: "active", label: "Active Borrowings", count: stats.active + stats.overdue },
-    { id: "history", label: "Borrow History", count: data?.records?.filter(r => r.status === "returned").length || 0 },
+    { id: "history", label: "Borrow History", count: data?.records?.filter((r: BorrowRecord) => r.status === "returned").length || 0 },
     { id: "reservations", label: "Reservations", count: stats.reserved },
   ];
 

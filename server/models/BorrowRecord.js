@@ -17,6 +17,15 @@ const borrowRecordSchema = new mongoose.Schema(
       enum: ["borrowed", "returned", "overdue", "reserved"],
       default: "borrowed",
     },
+    condition: {
+      type: String,
+      enum: ["good", "fair", "damaged", "lost"],
+      default: "good",
+    },
+    notes: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );

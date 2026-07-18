@@ -120,9 +120,14 @@ export async function updateBorrowRecord(id, recordData) {
   return data; // { message, record }
 }
 
-export async function returnBook(id) {
-  const { data } = await api.post(`/borrowing/${id}/return`);
+export async function returnBook(id, returnData = {}) {
+  const { data } = await api.post(`/borrowing/${id}/return`, returnData);
   return data; // { message, record }
+}
+
+export async function fetchReturnStats() {
+  const { data } = await api.get("/borrowing/return-stats");
+  return data;
 }
 
 export async function renewLoan(id, dueDate) {

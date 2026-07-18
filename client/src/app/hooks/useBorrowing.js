@@ -5,14 +5,15 @@ import {
   createBorrowRecord,
   updateBorrowRecord,
   returnBook,
+  fetchReturnStats,
   renewLoan,
   deleteBorrowRecord,
 } from "../services/api";
 
-export function useBorrowRecords({ page = 1, search = "", status = "", memberType = "" } = {}) {
+export function useBorrowRecords({ page = 1, limit = 7, search = "", status = "", memberType = "" } = {}) {
   return useQuery({
-    queryKey: ["borrowRecords", { page, search, status, memberType }],
-    queryFn: () => fetchBorrowRecords({ page, limit: 7, search, status, memberType }),
+    queryKey: ["borrowRecords", { page, limit, search, status, memberType }],
+    queryFn: () => fetchBorrowRecords({ page, limit, search, status, memberType }),
     staleTime: 10000,
     retry: 2,
   });
@@ -51,10 +52,20 @@ export function useUpdateBorrowRecord() {
 export function useReturnBook() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id) => returnBook(id),
+    mutationFn: ({ id, condition, notes }) => returnBook(id, { condition, notes }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["borrowRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["returnStats"] });
     },
+  });
+}
+
+export function useReturnStats() {
+  return useQuery({
+    queryKey: ["returnStats"],
+    queryFn: () => fetchReturnStats(),
+    staleTime: 10000,
+    retry: 2,
   });
 }
 

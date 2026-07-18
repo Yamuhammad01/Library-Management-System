@@ -72,10 +72,23 @@ async function updateBorrowRecord(req, res, next) {
  */
 async function returnBook(req, res, next) {
   try {
-    const record = await borrowingService.returnBook(req.params.id);
+    const record = await borrowingService.returnBook(req.params.id, req.body);
     res.json({ message: "Book returned successfully.", record });
   } catch (err) {
     if (err.statusCode) return res.status(err.statusCode).json({ error: err.message });
+    next(err);
+  }
+}
+
+/**
+ * GET /api/borrowing/return-stats
+ * Get return statistics.
+ */
+async function getReturnStats(req, res, next) {
+  try {
+    const stats = await borrowingService.getReturnStats();
+    res.json(stats);
+  } catch (err) {
     next(err);
   }
 }
@@ -118,6 +131,7 @@ module.exports = {
   createBorrowRecord,
   updateBorrowRecord,
   returnBook,
+  getReturnStats,
   renewLoan,
   deleteBorrowRecord,
 };

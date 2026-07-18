@@ -4,6 +4,7 @@ import LoginPage from "./LoginPage";
 import RegisterPage from "./RegisterPage";
 import BookCatalogPage from "./pages/BookCatalogPage";
 import BorrowingManagementPage from "./pages/BorrowingManagementPage";
+import ReturnManagementPage from "./pages/ReturnManagementPage";
 import {
   BookOpen, Search, Plus, Download, Eye, Pencil, Trash2,
   ChevronLeft, ChevronRight, X, AlertCircle, CheckCircle2,
@@ -36,7 +37,7 @@ type BorrowTab     = "active"    | "history"   | "reservations";
 type ActiveSection = "dashboard" | "books"     | "borrowing";
 type View =
   | "dashboard" | "books" | "add" | "edit" | "details"
-  | "borrowing" | "issue";
+  | "borrowing" | "issue" | "returns";
 
 interface BorrowRecord {
   id: number; bookId: number; bookTitle: string; bookCoverColor: string;
@@ -97,10 +98,15 @@ function fmtDate(d: string) {
 }
 
 /* ──────────────────────── SIDEBAR ──────────────────────────── */
-function Sidebar({ active, onNav, user, onLogout }: { active:ActiveSection; onNav:(v:View)=>void; user:{name:string;role:string}; onLogout:()=>void }) {
+function Sidebar({ view, onNav, user, onLogout }: { view:View; onNav:(v:View)=>void; user:{name:string;role:string}; onLogout:()=>void }) {
   const [catOpen, setCatOpen] = useState(true);
   const [borOpen, setBorOpen] = useState(true);
   const [memOpen, setMemOpen] = useState(false);
+
+  const active =
+    view === "dashboard" ? "dashboard" :
+    (view === "books" || view === "add" || view === "edit" || view === "details") ? "books" :
+    "borrowing";
 
   const navItem = (icon:React.ReactNode, label:string, isActive:boolean, onClick:()=>void) => (
     <button onClick={onClick}
@@ -155,8 +161,8 @@ function Sidebar({ active, onNav, user, onLogout }: { active:ActiveSection; onNa
           <>
             {secHdr(<ArrowLeftRight size={15}/>, "Borrowing", borOpen, ()=>setBorOpen(!borOpen))}
             {borOpen && <>
-              {subItem("Borrow Books",     active==="borrowing", ()=>onNav("borrowing"))}
-              {subItem("Return Books",     false,                ()=>onNav("borrowing"))}
+              {subItem("Borrow Books",     view==="borrowing" || view==="issue", ()=>onNav("borrowing"))}
+              {user.role === "Librarian" && subItem("Return Books", view==="returns", ()=>onNav("returns"))}
               {subItem("Borrowing History",false,                ()=>onNav("borrowing"))}
               {subItem("Reservations",     false,                ()=>onNav("borrowing"))}
             </>}
@@ -213,12 +219,12 @@ function Header() {
 }
 
 /* ──────────────────────── SHELL ─────────────────────────────── */
-function Shell({ children, active, onNav, user, onLogout }: { children:React.ReactNode; active:ActiveSection; onNav:(v:View)=>void; user:{name:string;role:string}; onLogout:()=>void }) {
+function Shell({ children, view, onNav, user, onLogout }: { children:React.ReactNode; view:View; onNav:(v:View)=>void; user:{name:string;role:string}; onLogout:()=>void }) {
   return (
     <div style={{fontFamily:"'Inter',sans-serif",background:"#EBEDF2"}} className="w-full h-screen flex flex-col overflow-hidden">
       <Header/>
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar active={active} onNav={onNav} user={user} onLogout={onLogout}/>
+        <Sidebar view={view} onNav={onNav} user={user} onLogout={onLogout}/>
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
@@ -374,7 +380,7 @@ function IssueBookPage({ onBack }: { onBack: () => void }) {
                 <div className="rounded-xl border border-gray-100 overflow-hidden" style={{maxHeight:240,overflowY:"auto"}}>
                   {filteredBooks.length===0
                     ? <p className="text-xs text-gray-400 text-center py-6">No available books found.</p>
-                    : filteredBooks.map((b)=> <BookRow key={b.isbn} book={b}/>)
+                    : filteredBooks.map((b: Book)=> <BookRow key={b.isbn} book={b}/>)
                   }
                 </div>
               </div>
@@ -618,12 +624,8 @@ function AppContent() {
     if (v==="dashboard") setView("dashboard");
     if (v==="books")     setView("books");
     if (v==="borrowing") setView("borrowing");
+    if (v==="returns")   setView("returns");
   };
-
-  const activeSection: ActiveSection =
-    view==="dashboard"            ? "dashboard" :
-    view==="books"||view==="add"||view==="edit"||view==="details" ? "books" :
-    "borrowing";
 
   if (!user) {
     if (showRegister) {
@@ -633,7 +635,7 @@ function AppContent() {
   }
 
   return (
-    <Shell active={activeSection} onNav={goNav} user={user} onLogout={handleLogout}>
+    <Shell view={view} onNav={goNav} user={user} onLogout={handleLogout}>
       {view==="dashboard" && <DashboardOverview onGoBooks={goBooks} onGoBorrowing={goBorrowing}/>}
       {view==="books" || view==="add" || view==="edit" || view==="details"
         ? <BookCatalogPage userRole={user.role} />
@@ -644,6 +646,9 @@ function AppContent() {
           {view==="borrowing" && <BorrowingManagementPage onIssue={goIssue}/>}
           {view==="issue"     && <IssueBookPage onBack={goBorrowing}/>}
         </>
+      )}
+      {view==="returns" && user.role === "Librarian" && (
+        <ReturnManagementPage userRole={user.role} />
       )}
     </Shell>
   );
