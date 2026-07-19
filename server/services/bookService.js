@@ -2,9 +2,19 @@ const Book = require("../models/Book");
 
 /**
  * List books with pagination, search, and filters.
- * Query params: page, limit, search, category, status
+ * Query params: page, limit, search, category, status, author, publisher, sortBy, sortOrder
  */
-async function listBooks({ page = 1, limit = 10, search = "", category = "", status = "" }) {
+async function listBooks({
+  page = 1,
+  limit = 10,
+  search = "",
+  category = "",
+  status = "",
+  author = "",
+  publisher = "",
+  sortBy = "createdAt",
+  sortOrder = "desc",
+}) {
   const filter = {};
 
   // Search across title, author, isbn
@@ -25,12 +35,26 @@ async function listBooks({ page = 1, limit = 10, search = "", category = "", sta
     filter.status = status;
   }
 
+  if (author.trim()) {
+    filter.author = { $regex: author.trim(), $options: "i" };
+  }
+
+  if (publisher.trim()) {
+    filter.publisher = { $regex: publisher.trim(), $options: "i" };
+  }
+
   const total = await Book.countDocuments(filter);
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const safePage = Math.min(page, totalPages);
 
+  // Build sort object
+  const sortObj = {};
+  const validSortFields = ["title", "author", "year", "createdAt", "availableCopies", "category"];
+  const field = validSortFields.includes(sortBy) ? sortBy : "createdAt";
+  sortObj[field] = sortOrder === "asc" ? 1 : -1;
+
   const books = await Book.find(filter)
-    .sort({ createdAt: -1 })
+    .sort(sortObj)
     .skip((safePage - 1) * limit)
     .limit(limit);
 

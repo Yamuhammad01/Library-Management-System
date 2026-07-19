@@ -6,13 +6,17 @@ const bookService = require("../services/bookService");
  */
 async function listBooks(req, res, next) {
   try {
-    const { page, limit, search, category, status } = req.query;
+    const { page, limit, search, category, status, author, publisher, sortBy, sortOrder } = req.query;
     const result = await bookService.listBooks({
       page: parseInt(page) || 1,
-      limit: parseInt(limit) || 8,
+      limit: parseInt(limit) || 12,
       search: search || "",
       category: category || "",
       status: status || "",
+      author: author || "",
+      publisher: publisher || "",
+      sortBy: sortBy || "createdAt",
+      sortOrder: sortOrder || "desc",
     });
     res.json(result);
   } catch (err) {

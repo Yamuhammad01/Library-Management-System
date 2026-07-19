@@ -15,6 +15,8 @@ const userSchema = new mongoose.Schema(
     memberId: { type: String, unique: true, sparse: true, default: null },
     memberType: { type: String, enum: ["student", "staff"], default: "student" },
     department: { type: String, default: "" },
+    phoneNumber: { type: String, default: "" },
+    profilePicture: { type: String, default: "" },
   },
   { timestamps: true }
 );

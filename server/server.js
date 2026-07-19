@@ -7,6 +7,7 @@ const authRoutes = require("./routes/auth");
 const bookRoutes = require("./routes/books");
 const borrowingRoutes = require("./routes/borrowing");
 const reservationRoutes = require("./routes/reservations");
+const profileRoutes = require("./routes/profile");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -21,6 +22,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/books", bookRoutes);
 app.use("/api/borrowing", borrowingRoutes);
 app.use("/api/reservations", reservationRoutes);
+app.use("/api/profile", profileRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

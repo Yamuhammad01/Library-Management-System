@@ -7,6 +7,8 @@ import BorrowingManagementPage from "./pages/BorrowingManagementPage";
 import ReturnManagementPage from "./pages/ReturnManagementPage";
 import ReservationManagementPage from "./pages/ReservationManagementPage";
 import LibraryMemberDashboard from "./pages/LibraryMemberDashboard";
+import ProfilePage from "./pages/ProfilePage";
+import MemberCatalogPage from "./pages/MemberCatalogPage";
 import {
   BookOpen, Search, Plus, Download, Eye, Pencil, Trash2,
   ChevronLeft, ChevronRight, X, AlertCircle, CheckCircle2,
@@ -39,7 +41,7 @@ type BorrowTab     = "active"    | "history"   | "reservations";
 type ActiveSection = "dashboard" | "books"     | "borrowing";
 type View =
   | "dashboard" | "books" | "add" | "edit" | "details"
-  | "borrowing" | "issue" | "returns" | "reservations";
+  | "borrowing" | "issue" | "returns" | "reservations" | "profile" | "catalog";
 
 interface BorrowRecord {
   id: number; bookId: number; bookTitle: string; bookCoverColor: string;
@@ -151,14 +153,19 @@ function Sidebar({ view, onNav, user, onLogout }: { view:View; onNav:(v:View)=>v
       </div>
       <nav className="flex flex-col py-3 gap-0.5 px-2">
         {navItem(<LayoutDashboard size={15}/>, "Dashboard", active==="dashboard", ()=>onNav("dashboard"))}
+        {navItem(<BookOpen size={15}/>, "Catalog", view==="catalog", ()=>onNav("catalog"))}
         <div className="px-2 py-1"><p style={{fontSize:10,fontWeight:700,color:"#9CA3AF",letterSpacing:"0.08em"}}>LIBRARY</p></div>
-        {secHdr(<BookOpen size={15}/>, "Catalog", catOpen, ()=>setCatOpen(!catOpen))}
-        {catOpen && <>
-          {subItem("All Books",  active==="books",    ()=>onNav("books"))}
-          {subItem("Categories", false,               ()=>{})}
-          {subItem("Authors",    false,               ()=>{})}
-          {subItem("Publishers", false,               ()=>{})}
-        </>}
+        {(user.role === "Librarian" || user.role === "Admin") && (
+          <>
+            {secHdr(<BookOpen size={15}/>, "Catalog", catOpen, ()=>setCatOpen(!catOpen))}
+            {catOpen && <>
+              {subItem("All Books",  active==="books",    ()=>onNav("books"))}
+              {subItem("Categories", false,               ()=>{})}
+              {subItem("Authors",    false,               ()=>{})}
+              {subItem("Publishers", false,               ()=>{})}
+            </>}
+          </>
+        )}
         {(user.role === "Librarian" || user.role === "Admin") && (
           <>
             {secHdr(<ArrowLeftRight size={15}/>, "Borrowing", borOpen, ()=>setBorOpen(!borOpen))}
@@ -176,6 +183,7 @@ function Sidebar({ view, onNav, user, onLogout }: { view:View; onNav:(v:View)=>v
           {subItem("Staff",    false, ()=>{})}
         </>}
         <div className="mx-2 my-2 border-t border-gray-100"/>
+        {navItem(<User size={15}/>, "Profile", view==="profile", ()=>onNav("profile"))}
         {navItem(<BarChart3 size={15}/>, "Reports",  false, ()=>{})}
         {navItem(<Settings  size={15}/>, "Settings", false, ()=>{})}
         <button onClick={onLogout} className="flex items-center gap-2.5 py-2 w-full text-left rounded-lg transition-colors"
@@ -629,6 +637,8 @@ function AppContent() {
     if (v==="borrowing")    setView("borrowing");
     if (v==="returns")      setView("returns");
     if (v==="reservations") setView("reservations");
+    if (v==="profile")      setView("profile");
+    if (v==="catalog")      setView("catalog");
   };
 
   if (!user) {
@@ -658,6 +668,8 @@ function AppContent() {
       {view==="reservations" && (user.role === "Librarian" || user.role === "Admin") && (
         <ReservationManagementPage />
       )}
+      {view==="profile" && <ProfilePage />}
+      {view==="catalog" && <MemberCatalogPage />}
     </Shell>
   );
 }

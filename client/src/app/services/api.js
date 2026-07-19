@@ -37,11 +37,6 @@ export async function logoutUser() {
   return data;
 }
 
-export async function changePassword(currentPassword, newPassword) {
-  const { data } = await api.post("/auth/change-password", { currentPassword, newPassword });
-  return data;
-}
-
 // ─── Dashboard API ───
 
 export async function fetchDashboardStats() {
@@ -66,15 +61,24 @@ export async function fetchMemberDashboard() {
 
 // ─── Books API ───
 
-export async function fetchBooks({ page = 1, limit = 8, search = "", category = "", status = "" } = {}) {
+export async function fetchBooks({ page = 1, limit = 12, search = "", category = "", status = "", author = "", publisher = "", sortBy = "", sortOrder = "" } = {}) {
   const params = new URLSearchParams();
   params.set("page", String(page));
   params.set("limit", String(limit));
   if (search) params.set("search", search);
   if (category) params.set("category", category);
   if (status) params.set("status", status);
+  if (author) params.set("author", author);
+  if (publisher) params.set("publisher", publisher);
+  if (sortBy) params.set("sortBy", sortBy);
+  if (sortOrder) params.set("sortOrder", sortOrder);
   const { data } = await api.get(`/books?${params.toString()}`);
   return data; // { books, total, page, totalPages }
+}
+
+export async function fetchBookFilters() {
+  const { data } = await api.get("/books/filters");
+  return data; // { authors, publishers, categories }
 }
 
 export async function fetchBook(id) {
@@ -200,6 +204,23 @@ export async function notifyNextMember(bookId) {
 
 export async function deleteReservation(id) {
   const { data } = await api.delete(`/reservations/${id}`);
+  return data; // { message }
+}
+
+// ─── Profile API ───
+
+export async function fetchProfile() {
+  const { data } = await api.get("/profile");
+  return data; // { user }
+}
+
+export async function updateProfile(profileData) {
+  const { data } = await api.put("/profile", profileData);
+  return data; // { message, user }
+}
+
+export async function changePassword(currentPassword, newPassword) {
+  const { data } = await api.put("/profile/change-password", { currentPassword, newPassword });
   return data; // { message }
 }
 

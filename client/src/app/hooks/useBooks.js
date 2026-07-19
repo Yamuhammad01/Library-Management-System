@@ -2,16 +2,26 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchBooks,
   fetchBook,
+  fetchBookFilters,
   createBook,
   updateBook,
   deleteBook,
 } from "../services/api";
 
-export function useBooks({ page = 1, search = "", category = "", status = "" } = {}) {
+export function useBooks({ page = 1, search = "", category = "", status = "", author = "", publisher = "", sortBy = "", sortOrder = "" } = {}) {
   return useQuery({
-    queryKey: ["books", { page, search, category, status }],
-    queryFn: () => fetchBooks({ page, limit: 8, search, category, status }),
+    queryKey: ["books", { page, search, category, status, author, publisher, sortBy, sortOrder }],
+    queryFn: () => fetchBooks({ page, limit: 12, search, category, status, author, publisher, sortBy, sortOrder }),
     staleTime: 10000,
+    retry: 2,
+  });
+}
+
+export function useBookFilters() {
+  return useQuery({
+    queryKey: ["bookFilters"],
+    queryFn: fetchBookFilters,
+    staleTime: 60000,
     retry: 2,
   });
 }

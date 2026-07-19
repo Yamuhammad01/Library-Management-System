@@ -8,15 +8,16 @@ const {
   updateBook,
   deleteBook,
 } = require("../controllers/bookController");
+const { getFilterOptions } = require("../controllers/bookFiltersController");
 
-// All book routes require authentication + Librarian/Admin role
-router.use(authenticate);
-router.use(authorize("Librarian", "Admin"));
+// Public read endpoints (authenticated users can browse)
+router.get("/filters", authenticate, getFilterOptions);
+router.get("/", authenticate, listBooks);
+router.get("/:id", authenticate, getBook);
 
-router.get("/", listBooks);
-router.get("/:id", getBook);
-router.post("/", createBook);
-router.put("/:id", updateBook);
-router.delete("/:id", deleteBook);
+// Write endpoints (Librarian/Admin only)
+router.post("/", authenticate, authorize("Librarian", "Admin"), createBook);
+router.put("/:id", authenticate, authorize("Librarian", "Admin"), updateBook);
+router.delete("/:id", authenticate, authorize("Librarian", "Admin"), deleteBook);
 
 module.exports = router;
