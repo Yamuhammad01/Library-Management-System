@@ -3,6 +3,7 @@ import {
   fetchDashboardStats,
   fetchBorrowingActivity,
   fetchCategoryData,
+  fetchMemberDashboard,
 } from "../services/api";
 
 export function useDashboardStats() {
@@ -28,6 +29,15 @@ export function useCategoryData() {
     queryKey: ["dashboard", "categories"],
     queryFn: fetchCategoryData,
     staleTime: 30000,
+    retry: 2,
+  });
+}
+
+export function useMemberDashboard() {
+  return useQuery({
+    queryKey: ["dashboard", "member"],
+    queryFn: fetchMemberDashboard,
+    staleTime: 15000,
     retry: 2,
   });
 }

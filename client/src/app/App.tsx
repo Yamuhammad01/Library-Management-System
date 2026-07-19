@@ -6,6 +6,7 @@ import BookCatalogPage from "./pages/BookCatalogPage";
 import BorrowingManagementPage from "./pages/BorrowingManagementPage";
 import ReturnManagementPage from "./pages/ReturnManagementPage";
 import ReservationManagementPage from "./pages/ReservationManagementPage";
+import LibraryMemberDashboard from "./pages/LibraryMemberDashboard";
 import {
   BookOpen, Search, Plus, Download, Eye, Pencil, Trash2,
   ChevronLeft, ChevronRight, X, AlertCircle, CheckCircle2,
@@ -639,7 +640,8 @@ function AppContent() {
 
   return (
     <Shell view={view} onNav={goNav} user={user} onLogout={handleLogout}>
-      {view==="dashboard" && <DashboardOverview onGoBooks={goBooks} onGoBorrowing={goBorrowing}/>}
+      {view==="dashboard" && user.role === "LibraryMember" && <LibraryMemberDashboard />}
+      {view==="dashboard" && user.role !== "LibraryMember" && <DashboardOverview onGoBooks={goBooks} onGoBorrowing={goBorrowing}/>}
       {view==="books" || view==="add" || view==="edit" || view==="details"
         ? <BookCatalogPage userRole={user.role} />
         : null

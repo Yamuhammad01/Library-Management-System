@@ -1,8 +1,34 @@
 const User = require("../models/User");
+const Member = require("../models/Member");
 const jwt = require("jsonwebtoken");
 
 /**
+ * Generate a unique member ID.
+ * Format: STU-YYYY-XXXX (student) or STF-YYYY-XXXX (staff)
+ */
+async function generateMemberId(type = "student") {
+  const year = new Date().getFullYear();
+  const prefix = type === "staff" ? "STF" : "STU";
+  
+  // Find the highest existing member ID with the same prefix and year
+  const lastMember = await Member.findOne({
+    id: { $regex: `^${prefix}-${year}-` },
+  })
+    .sort({ id: -1 })
+    .lean();
+
+  let nextNum = 1;
+  if (lastMember) {
+    const parts = lastMember.id.split("-");
+    nextNum = parseInt(parts[2], 10) + 1;
+  }
+
+  return `${prefix}-${year}-${String(nextNum).padStart(4, "0")}`;
+}
+
+/**
  * Register a new user (always role = LibraryMember).
+ * Auto-creates a Member record and links it via memberId.
  */
 async function register({ fullName, email, password }) {
   const existing = await User.findOne({ email });
@@ -12,11 +38,28 @@ async function register({ fullName, email, password }) {
     throw error;
   }
 
+  const memberType = "student";
+  const department = "";
+  const memberId = await generateMemberId(memberType);
+
+  // Create the Member record (backward compatibility with Librarian/Admin features)
+  await Member.create({
+    id: memberId,
+    name: fullName,
+    type: memberType,
+    department,
+    email,
+    activeLoans: 0,
+  });
+
   const user = await User.create({
     fullName,
     email,
     password,
     role: "LibraryMember",
+    memberId,
+    memberType,
+    department,
   });
 
   return { user };

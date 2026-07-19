@@ -11,6 +11,10 @@ const userSchema = new mongoose.Schema(
       enum: ["Admin", "Librarian", "LibraryMember"],
       default: "LibraryMember",
     },
+    // Member-specific fields (for LibraryMember role)
+    memberId: { type: String, unique: true, sparse: true, default: null },
+    memberType: { type: String, enum: ["student", "staff"], default: "student" },
+    department: { type: String, default: "" },
   },
   { timestamps: true }
 );

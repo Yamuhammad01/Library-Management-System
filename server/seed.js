@@ -139,15 +139,19 @@ async function seed() {
     const seededUsers = [
       { fullName: "Sarah Johnson", email: "librarian@unilib.edu", password: "password123", role: "Librarian" },
       { fullName: "Admin User", email: "admin@unilib.edu", password: "admin123", role: "Admin" },
+      { fullName: "Emily Chen", email: "emily@unilib.edu", password: "password123", role: "LibraryMember", memberId: "STU-2024-0042", memberType: "student", department: "Computer Science" },
+      { fullName: "Kevin Liu", email: "kevin@unilib.edu", password: "password123", role: "LibraryMember", memberId: "STU-2024-0055", memberType: "student", department: "Medicine" },
     ];
     for (const u of seededUsers) {
       await User.create(u);
     }
-    console.log(`Inserted ${seededUsers.length} users (Librarian + Admin).`);
+    console.log(`Inserted ${seededUsers.length} users (Librarian + Admin + LibraryMembers).`);
 
     console.log("\n Seed completed successfully!");
-    console.log("Librarian login: librarian@unilib.edu / password123");
-    console.log(" Admin login:     admin@unilib.edu / admin123");
+    console.log("Librarian login:  librarian@unilib.edu / password123");
+    console.log(" Admin login:      admin@unilib.edu / admin123");
+    console.log(" Member (Emily):   emily@unilib.edu / password123");
+    console.log(" Member (Kevin):   kevin@unilib.edu / password123");
     process.exit(0);
   } catch (err) {
     console.error(" Seed failed:", err);

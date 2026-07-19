@@ -59,6 +59,11 @@ export async function fetchCategoryData() {
   return data;
 }
 
+export async function fetchMemberDashboard() {
+  const { data } = await api.get("/dashboard/member");
+  return data;
+}
+
 // ─── Books API ───
 
 export async function fetchBooks({ page = 1, limit = 8, search = "", category = "", status = "" } = {}) {

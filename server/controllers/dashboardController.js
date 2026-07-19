@@ -39,8 +39,26 @@ async function getCategoryData(req, res, next) {
   }
 }
 
+/**
+ * GET /api/dashboard/member
+ * Returns member-specific dashboard data for the authenticated LibraryMember.
+ */
+async function getMemberDashboard(req, res, next) {
+  try {
+    const memberId = req.user.memberId;
+    if (!memberId) {
+      return res.status(400).json({ error: "No member profile linked to this account." });
+    }
+    const data = await dashboardService.getMemberDashboard(memberId);
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getStats,
   getBorrowingActivity,
   getCategoryData,
+  getMemberDashboard,
 };

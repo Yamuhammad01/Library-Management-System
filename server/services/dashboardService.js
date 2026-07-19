@@ -148,8 +148,68 @@ async function getCategoryData() {
   return await BorrowRecord.aggregate(pipeline);
 }
 
+/**
+ * Get member-specific dashboard data for a LibraryMember.
+ * Returns stats and lists scoped to the given memberId.
+ */
+async function getMemberDashboard(memberId) {
+  // Currently borrowed books (status: borrowed or overdue)
+  const currentlyBorrowed = await BorrowRecord.find({
+    memberId,
+    status: { $in: ["borrowed", "overdue"] },
+  })
+    .populate("bookId", "title author coverColor category isbn")
+    .sort({ dueDate: 1 })
+    .lean();
+
+  // Books due soon (due within 3 days, not yet returned)
+  const threeDaysFromNow = new Date();
+  threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+  const dueSoon = currentlyBorrowed.filter((r) => {
+    if (!r.dueDate) return false;
+    const due = new Date(r.dueDate);
+    return due <= threeDaysFromNow;
+  });
+
+  // Active reservations (pending or approved)
+  const Reservation = require("../models/Reservation");
+  const activeReservations = await Reservation.find({
+    memberId,
+    status: { $in: ["pending", "approved", "notified"] },
+  })
+    .populate("bookId", "title author coverColor category isbn")
+    .sort({ reservedAt: -1 })
+    .lean();
+
+  // Total books borrowed (all time, excluding reserved)
+  const totalBorrowed = await BorrowRecord.countDocuments({
+    memberId,
+    status: { $ne: "reserved" },
+  });
+
+  // Recently borrowed books (last 5, including returned)
+  const recentlyBorrowed = await BorrowRecord.find({
+    memberId,
+    status: { $ne: "reserved" },
+  })
+    .populate("bookId", "title author coverColor category isbn")
+    .sort({ borrowDate: -1 })
+    .limit(5)
+    .lean();
+
+  return {
+    currentlyBorrowed,
+    dueSoonCount: dueSoon.length,
+    dueSoon,
+    activeReservations,
+    totalBorrowed,
+    recentlyBorrowed,
+  };
+}
+
 module.exports = {
   getStats,
   getBorrowingActivity,
   getCategoryData,
+  getMemberDashboard,
 };
