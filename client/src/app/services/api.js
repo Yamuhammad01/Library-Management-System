@@ -140,4 +140,62 @@ export async function deleteBorrowRecord(id) {
   return data; // { message }
 }
 
+// ─── Reservations API ───
+
+export async function fetchReservationStats() {
+  const { data } = await api.get("/reservations/stats");
+  return data; // { total, pending, approved, rejected, cancelled, completed, notified, expiringSoon }
+}
+
+export async function fetchReservations({ page = 1, limit = 10, search = "", status = "", memberType = "" } = {}) {
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+  if (search)     params.set("search",     search);
+  if (status)     params.set("status",     status);
+  if (memberType) params.set("memberType", memberType);
+  const { data } = await api.get(`/reservations?${params.toString()}`);
+  return data; // { records, total, page, totalPages }
+}
+
+export async function fetchReservation(id) {
+  const { data } = await api.get(`/reservations/${id}`);
+  return data;
+}
+
+export async function createReservation(reservationData) {
+  const { data } = await api.post("/reservations", reservationData);
+  return data; // { message, record }
+}
+
+export async function approveReservation(id) {
+  const { data } = await api.patch(`/reservations/${id}/approve`);
+  return data; // { message, record }
+}
+
+export async function rejectReservation(id, reason = "") {
+  const { data } = await api.patch(`/reservations/${id}/reject`, { reason });
+  return data; // { message, record }
+}
+
+export async function cancelReservation(id) {
+  const { data } = await api.patch(`/reservations/${id}/cancel`);
+  return data; // { message, record }
+}
+
+export async function markReservationCompleted(id) {
+  const { data } = await api.patch(`/reservations/${id}/complete`);
+  return data; // { message, record }
+}
+
+export async function notifyNextMember(bookId) {
+  const { data } = await api.post(`/reservations/notify-next/${bookId}`);
+  return data; // { message, record }
+}
+
+export async function deleteReservation(id) {
+  const { data } = await api.delete(`/reservations/${id}`);
+  return data; // { message }
+}
+
 export default api;

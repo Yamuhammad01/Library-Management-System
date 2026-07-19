@@ -5,6 +5,7 @@ import RegisterPage from "./RegisterPage";
 import BookCatalogPage from "./pages/BookCatalogPage";
 import BorrowingManagementPage from "./pages/BorrowingManagementPage";
 import ReturnManagementPage from "./pages/ReturnManagementPage";
+import ReservationManagementPage from "./pages/ReservationManagementPage";
 import {
   BookOpen, Search, Plus, Download, Eye, Pencil, Trash2,
   ChevronLeft, ChevronRight, X, AlertCircle, CheckCircle2,
@@ -13,7 +14,7 @@ import {
   TrendingDown, BookCopy, ArrowLeft, MapPin, Calendar, Hash,
   Globe, BookMarked, GraduationCap, Building2, User,
   MoreVertical, Check, RotateCcw, RefreshCw, ClipboardList,
-  UserCheck, BookPlus, AlertTriangle, Clock, BadgeCheck,
+  UserCheck, BookPlus, AlertTriangle, Clock, BadgeCheck, CalendarCheck,
 } from "lucide-react";
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -37,7 +38,7 @@ type BorrowTab     = "active"    | "history"   | "reservations";
 type ActiveSection = "dashboard" | "books"     | "borrowing";
 type View =
   | "dashboard" | "books" | "add" | "edit" | "details"
-  | "borrowing" | "issue" | "returns";
+  | "borrowing" | "issue" | "returns" | "reservations";
 
 interface BorrowRecord {
   id: number; bookId: number; bookTitle: string; bookCoverColor: string;
@@ -164,7 +165,7 @@ function Sidebar({ view, onNav, user, onLogout }: { view:View; onNav:(v:View)=>v
               {subItem("Borrow Books",     view==="borrowing" || view==="issue", ()=>onNav("borrowing"))}
               {user.role === "Librarian" && subItem("Return Books", view==="returns", ()=>onNav("returns"))}
               {subItem("Borrowing History",false,                ()=>onNav("borrowing"))}
-              {subItem("Reservations",     false,                ()=>onNav("borrowing"))}
+              {subItem("Reservations",     view==="reservations",  ()=>onNav("reservations"))}
             </>}
           </>
         )}
@@ -616,15 +617,17 @@ function AppContent() {
     setView("borrowing");
   };
 
-  const goBooks     = ()              => { setSel(null); setView("books"); };
-  const goBorrowing = ()              => setView("borrowing");
-  const goIssue     = ()              => setView("issue");
+  const goBooks        = ()              => { setSel(null); setView("books"); };
+  const goBorrowing    = ()              => setView("borrowing");
+  const goIssue        = ()              => setView("issue");
+  const goReservations = ()              => setView("reservations");
 
   const goNav = (v: View) => {
-    if (v==="dashboard") setView("dashboard");
-    if (v==="books")     setView("books");
-    if (v==="borrowing") setView("borrowing");
-    if (v==="returns")   setView("returns");
+    if (v==="dashboard")    setView("dashboard");
+    if (v==="books")        setView("books");
+    if (v==="borrowing")    setView("borrowing");
+    if (v==="returns")      setView("returns");
+    if (v==="reservations") setView("reservations");
   };
 
   if (!user) {
@@ -649,6 +652,9 @@ function AppContent() {
       )}
       {view==="returns" && user.role === "Librarian" && (
         <ReturnManagementPage userRole={user.role} />
+      )}
+      {view==="reservations" && (user.role === "Librarian" || user.role === "Admin") && (
+        <ReservationManagementPage />
       )}
     </Shell>
   );
