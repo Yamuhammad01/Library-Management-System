@@ -79,6 +79,59 @@ async function getBook(id) {
   return book;
 }
 
+
+/**
+ * Create a new borrowing record and update book availability.
+ */
+async function createBorrowRecord(data) {
+  // 1. Verify the book exists and is available
+  const book = await Book.findById(data.bookId);
+  if (!book) {
+    const err = new Error("Book not found.");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  if (book.availableCopies < 1) {
+    const err = new Error("No copies of this book are currently available.");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // 2. Create the borrowing transaction transaction record
+  const borrowRecord = await BorrowingRecord.create({
+    memberId: data.memberId,
+    memberName: data.memberName,
+    memberType: data.memberType,
+    bookId: book._id,
+    bookTitle: book.title,
+    borrowDate: new Date(),
+    dueDate: data.dueDate || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // Default 14 days
+    status: "borrowed"
+  });
+
+  // 3. Decrement the available copies in the Book collection
+  book.availableCopies -= 1;
+  book.borrowCount += 1;
+  await book.save();
+
+  return borrowRecord;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /**
  * Create a new book with validation.
  */

@@ -16,6 +16,23 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Request logging middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  
+  // Log request
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  
+  // Log response when finished
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const statusColor = res.statusCode < 400 ? '\x1b[32m' : '\x1b[31m';
+    console.log(`${statusColor}[${new Date().toISOString()}] ${req.method} ${req.url} ${res.statusCode} ${duration}ms\x1b[0m`);
+  });
+  
+  next();
+});
+
 // Routes
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/auth", authRoutes);

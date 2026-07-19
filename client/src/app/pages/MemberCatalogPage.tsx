@@ -1,12 +1,13 @@
 import { useState, useMemo } from "react";
 import { useBooks, useBookFilters } from "../hooks/useBooks";
+import { useBorrowForSelf } from "../hooks/useBorrowing";
 import {
   BookCover, BookStatusBadge, CatBadge, iCls, iSty, PUR,
 } from "../components/BookUI";
 import {
   Search, ChevronLeft, ChevronRight, BookOpen, MapPin, Calendar,
   Hash, Building2, AlertTriangle, RefreshCw, Filter, X,
-  ArrowUpDown, BookMarked, BookPlus, Layers,
+  ArrowUpDown, BookMarked, BookPlus, Layers, CheckCircle2, AlertCircle,
 } from "lucide-react";
 import type { Book } from "../components/BookUI";
 
@@ -22,8 +23,28 @@ const SORT_OPTIONS = [
 ];
 
 /* ─────────────────── BOOK CARD ─────────────────── */
-function BookCard({ book }: { book: Book }) {
+function BookCard({ book, onBorrowSuccess }: { book: Book; onBorrowSuccess?: () => void }) {
   const isAvailable = book.availableCopies > 0;
+  const [borrowMsg, setBorrowMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [isBorrowing, setIsBorrowing] = useState(false);
+
+  const borrowMutation = useBorrowForSelf();
+
+  const handleBorrow = async () => {
+    setIsBorrowing(true);
+    setBorrowMsg(null);
+    try {
+      const res = await borrowMutation.mutateAsync({ bookId: book._id } as any);
+      setBorrowMsg({ type: "success", text: (res as any)?.message || `Borrowed "${book.title}" successfully!` });
+      onBorrowSuccess?.();
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || "Borrow failed. Please try again.";
+      setBorrowMsg({ type: "error", text: msg });
+    } finally {
+      setIsBorrowing(false);
+      setTimeout(() => setBorrowMsg(null), 4000);
+    }
+  };
 
   return (
     <div
@@ -72,26 +93,47 @@ function BookCard({ book }: { book: Book }) {
         </div>
 
         {/* Availability + Action */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-50 mt-1">
-          <div>
-            <span className="text-xs text-gray-500">Available: </span>
-            <span className="text-sm font-bold" style={{ color: isAvailable ? "#059669" : "#DC2626" }}>
-              {book.availableCopies}/{book.totalCopies}
-            </span>
+        <div className="flex flex-col gap-2 pt-2 border-t border-gray-50 mt-1">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-xs text-gray-500">Available: </span>
+              <span className="text-sm font-bold" style={{ color: isAvailable ? "#059669" : "#DC2626" }}>
+                {book.availableCopies}/{book.totalCopies}
+              </span>
+            </div>
+            <button
+              onClick={handleBorrow}
+              disabled={isBorrowing || !isAvailable}
+              className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg text-white transition-all hover:opacity-90 disabled:opacity-60"
+              style={{
+                background: isAvailable ? PUR : "#D97706",
+                boxShadow: isAvailable ? `0 2px 8px ${PUR}55` : "0 2px 8px rgba(217,119,6,0.3)",
+              }}
+            >
+              {isBorrowing ? (
+                <span className="w-3 h-3 rounded-full border-2 border-white border-t-transparent animate-spin" />
+              ) : isAvailable ? (
+                <><BookPlus size={13} /> Borrow</>
+              ) : (
+                <><BookMarked size={13} /> Unavailable</>
+              )}
+            </button>
           </div>
-          <button
-            className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg text-white transition-all hover:opacity-90"
-            style={{
-              background: isAvailable ? PUR : "#D97706",
-              boxShadow: isAvailable ? `0 2px 8px ${PUR}55` : "0 2px 8px rgba(217,119,6,0.3)",
-            }}
-          >
-            {isAvailable ? (
-              <><BookPlus size={13} /> Borrow</>
-            ) : (
-              <><BookMarked size={13} /> Reserve</>
-            )}
-          </button>
+
+          {/* Feedback message */}
+          {borrowMsg && (
+            <div
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium"
+              style={{
+                background: borrowMsg.type === "success" ? "#ECFDF5" : "#FEF2F2",
+                color: borrowMsg.type === "success" ? "#065F46" : "#991B1B",
+                border: `1px solid ${borrowMsg.type === "success" ? "#A7F3D0" : "#FECACA"}`,
+              }}
+            >
+              {borrowMsg.type === "success" ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}
+              <span className="flex-1">{borrowMsg.text}</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -348,7 +390,7 @@ export default function MemberCatalogPage() {
       {!isLoading && !isError && books.length > 0 && (
         <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
           {books.map((book: Book) => (
-            <BookCard key={book._id} book={book} />
+            <BookCard key={book._id} book={book} onBorrowSuccess={refetch} />
           ))}
         </div>
       )}

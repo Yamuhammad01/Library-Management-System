@@ -149,6 +149,12 @@ export async function deleteBorrowRecord(id) {
   return data; // { message }
 }
 
+export async function borrowForSelf(bookId, borrowDurationDays = 14) {
+  const payload = { bookId, borrowDurationDays };
+  const { data } = await api.post("/borrowing/self", payload);
+  return data; // { message, record }
+}
+
 // ─── Reservations API ───
 
 export async function fetchReservationStats() {

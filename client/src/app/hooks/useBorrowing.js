@@ -8,6 +8,7 @@ import {
   fetchReturnStats,
   renewLoan,
   deleteBorrowRecord,
+  borrowForSelf,
 } from "../services/api";
 
 export function useBorrowRecords({ page = 1, limit = 7, search = "", status = "", memberType = "" } = {}) {
@@ -85,6 +86,19 @@ export function useDeleteBorrowRecord() {
     mutationFn: (id) => deleteBorrowRecord(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["borrowRecords"] });
+    },
+  });
+}
+
+export function useBorrowForSelf() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (vars) => borrowForSelf(vars.bookId, vars.borrowDurationDays),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["books"] });
+      queryClient.invalidateQueries({ queryKey: ["borrowRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["memberDashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
     },
   });
 }

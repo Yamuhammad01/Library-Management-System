@@ -5,6 +5,7 @@ const {
   listBorrowRecords,
   getBorrowRecord,
   createBorrowRecord,
+  borrowForSelf,
   updateBorrowRecord,
   returnBook,
   getReturnStats,
@@ -18,6 +19,9 @@ router.use(authenticate);
 // Return management endpoints (Librarian only)
 router.get("/return-stats", authorize("Librarian"), getReturnStats);
 router.post("/:id/return", authorize("Librarian"), returnBook);
+
+// Member self-service borrowing (LibraryMembers can borrow for themselves)
+router.post("/self", borrowForSelf);
 
 // General borrowing routes require authentication + Librarian/Admin role
 router.use(authorize("Librarian", "Admin"));
