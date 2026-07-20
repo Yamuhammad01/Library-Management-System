@@ -301,6 +301,62 @@ async function deleteBorrowRecord(id) {
   return { message: "Borrow record deleted successfully." };
 }
 
+/**
+ * Get borrowing history for a specific member.
+ * Query params: page, limit, search, status, sortBy, sortOrder
+ */
+async function getMyBorrowingHistory({ memberId, page = 1, limit = 10, search = "", status = "", sortBy = "borrowDate", sortOrder = "desc" }) {
+  const filter = { memberId };
+
+  // Search across bookTitle, isbn
+  if (search.trim()) {
+    const q = search.trim();
+    filter.$or = [
+      { bookTitle: { $regex: q, $options: "i" } },
+      { isbn: { $regex: q, $options: "i" } },
+    ];
+  }
+
+  // Status filter
+  if (status.trim()) {
+    if (status === "active") {
+      filter.status = { $in: ["borrowed", "overdue"] };
+    } else {
+      filter.status = status;
+    }
+  }
+
+  const total = await BorrowRecord.countDocuments(filter);
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const safePage = Math.min(page, totalPages);
+
+  // Sorting
+  const sort = {};
+  if (sortBy === "borrowDate") {
+    sort.borrowDate = sortOrder === "asc" ? 1 : -1;
+  } else if (sortBy === "dueDate") {
+    sort.dueDate = sortOrder === "asc" ? 1 : -1;
+  } else if (sortBy === "returnDate") {
+    sort.returnDate = sortOrder === "asc" ? 1 : -1;
+  } else if (sortBy === "bookTitle") {
+    sort.bookTitle = sortOrder === "asc" ? 1 : -1;
+  } else {
+    sort.createdAt = -1;
+  }
+
+  const records = await BorrowRecord.find(filter)
+    .sort(sort)
+    .skip((safePage - 1) * limit)
+    .limit(limit);
+
+  return {
+    records,
+    total,
+    page: safePage,
+    totalPages,
+  };
+}
+
 module.exports = {
   listBorrowRecords,
   getBorrowRecord,
@@ -310,4 +366,5 @@ module.exports = {
   getReturnStats,
   renewLoan,
   deleteBorrowRecord,
+  getMyBorrowingHistory,
 };

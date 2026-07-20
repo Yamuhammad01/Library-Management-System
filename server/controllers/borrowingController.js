@@ -183,6 +183,35 @@ async function deleteBorrowRecord(req, res, next) {
   }
 }
 
+/**
+ * GET /api/borrowing/self/history
+ * Get borrowing history for the authenticated member only.
+ */
+async function getMyBorrowingHistory(req, res, next) {
+  try {
+    const user = req.user;
+    const { page = 1, limit = 10, search = "", status = "", sortBy = "borrowDate", sortOrder = "desc" } = req.query;
+
+    if (!user.memberId) {
+      return res.status(400).json({ error: "No member profile linked to this account." });
+    }
+
+    const result = await borrowingService.getMyBorrowingHistory({
+      memberId: user.memberId,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      search: search || "",
+      status: status || "",
+      sortBy: sortBy || "borrowDate",
+      sortOrder: sortOrder || "desc",
+    });
+
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   listBorrowRecords,
   getBorrowRecord,
@@ -193,4 +222,5 @@ module.exports = {
   getReturnStats,
   renewLoan,
   deleteBorrowRecord,
+  getMyBorrowingHistory,
 };

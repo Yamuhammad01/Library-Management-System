@@ -155,6 +155,18 @@ export async function borrowForSelf(bookId, borrowDurationDays = 14) {
   return data; // { message, record }
 }
 
+export async function fetchMyBorrowingHistory({ page = 1, limit = 10, search = "", status = "", sortBy = "borrowDate", sortOrder = "desc" } = {}) {
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+  if (search) params.set("search", search);
+  if (status) params.set("status", status);
+  if (sortBy) params.set("sortBy", sortBy);
+  if (sortOrder) params.set("sortOrder", sortOrder);
+  const { data } = await api.get(`/borrowing/self/history?${params.toString()}`);
+  return data; // { records, total, page, totalPages }
+}
+
 // ─── Reservations API ───
 
 export async function fetchReservationStats() {

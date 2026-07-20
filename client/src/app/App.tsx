@@ -10,6 +10,7 @@ import LibraryMemberDashboard from "./pages/LibraryMemberDashboard";
 import ProfilePage from "./pages/ProfilePage";
 import MemberCatalogPage from "./pages/MemberCatalogPage";
 import MyReservationsPage from "./pages/MyReservationsPage";
+import MyBorrowingHistoryPage from "./pages/MyBorrowingHistoryPage";
 import {
   BookOpen, Search, Plus, Download, Eye, Pencil, Trash2,
   ChevronLeft, ChevronRight, X, AlertCircle, CheckCircle2,
@@ -42,7 +43,7 @@ type BorrowTab     = "active"    | "history"   | "reservations";
 type ActiveSection = "dashboard" | "books"     | "borrowing";
 type View =
   | "dashboard" | "books" | "add" | "edit" | "details"
-  | "borrowing" | "issue" | "returns" | "reservations" | "profile" | "catalog" | "myReservations";
+  | "borrowing" | "issue" | "returns" | "reservations" | "profile" | "catalog" | "myReservations" | "myBorrowingHistory";
 
 interface BorrowRecord {
   id: number; bookId: number; bookTitle: string; bookCoverColor: string;
@@ -179,6 +180,7 @@ function Sidebar({ view, onNav, user, onLogout }: { view:View; onNav:(v:View)=>v
         )}
         {user.role === "LibraryMember" && (
           <>
+            {subItem("My Borrowing History", view==="myBorrowingHistory", ()=>onNav("myBorrowingHistory"))}
             {subItem("My Reservations", view==="myReservations", ()=>onNav("myReservations"))}
           </>
         )}
@@ -640,14 +642,15 @@ function AppContent() {
   const goReservations = ()              => setView("reservations");
 
   const goNav = (v: View) => {
-    if (v==="dashboard")      setView("dashboard");
-    if (v==="books")          setView("books");
-    if (v==="borrowing")      setView("borrowing");
-    if (v==="returns")        setView("returns");
-    if (v==="reservations")   setView("reservations");
-    if (v==="profile")        setView("profile");
-    if (v==="catalog")        setView("catalog");
-    if (v==="myReservations") setView("myReservations");
+    if (v==="dashboard")         setView("dashboard");
+    if (v==="books")             setView("books");
+    if (v==="borrowing")         setView("borrowing");
+    if (v==="returns")           setView("returns");
+    if (v==="reservations")      setView("reservations");
+    if (v==="profile")           setView("profile");
+    if (v==="catalog")           setView("catalog");
+    if (v==="myReservations")    setView("myReservations");
+    if (v==="myBorrowingHistory") setView("myBorrowingHistory");
   };
 
   if (!user) {
@@ -679,6 +682,9 @@ function AppContent() {
       )}
       {view==="myReservations" && user.role === "LibraryMember" && (
         <MyReservationsPage />
+      )}
+      {view==="myBorrowingHistory" && user.role === "LibraryMember" && (
+        <MyBorrowingHistoryPage onBack={() => setView("dashboard")} />
       )}
       {view==="profile" && <ProfilePage />}
       {view==="catalog" && <MemberCatalogPage />}

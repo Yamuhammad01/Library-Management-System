@@ -11,6 +11,7 @@ const {
   getReturnStats,
   renewLoan,
   deleteBorrowRecord,
+  getMyBorrowingHistory,
 } = require("../controllers/borrowingController");
 
 // All borrowing routes require authentication
@@ -22,6 +23,9 @@ router.post("/:id/return", authorize("Librarian"), returnBook);
 
 // Member self-service borrowing (LibraryMembers can borrow for themselves)
 router.post("/self", borrowForSelf);
+
+// Member self-service borrowing history (LibraryMembers can view their own history)
+router.get("/self/history", getMyBorrowingHistory);
 
 // General borrowing routes require authentication + Librarian/Admin role
 router.use(authorize("Librarian", "Admin"));
