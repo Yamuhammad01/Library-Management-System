@@ -9,6 +9,7 @@ import ReservationManagementPage from "./pages/ReservationManagementPage";
 import LibraryMemberDashboard from "./pages/LibraryMemberDashboard";
 import ProfilePage from "./pages/ProfilePage";
 import MemberCatalogPage from "./pages/MemberCatalogPage";
+import MyReservationsPage from "./pages/MyReservationsPage";
 import {
   BookOpen, Search, Plus, Download, Eye, Pencil, Trash2,
   ChevronLeft, ChevronRight, X, AlertCircle, CheckCircle2,
@@ -41,7 +42,7 @@ type BorrowTab     = "active"    | "history"   | "reservations";
 type ActiveSection = "dashboard" | "books"     | "borrowing";
 type View =
   | "dashboard" | "books" | "add" | "edit" | "details"
-  | "borrowing" | "issue" | "returns" | "reservations" | "profile" | "catalog";
+  | "borrowing" | "issue" | "returns" | "reservations" | "profile" | "catalog" | "myReservations";
 
 interface BorrowRecord {
   id: number; bookId: number; bookTitle: string; bookCoverColor: string;
@@ -170,12 +171,19 @@ function Sidebar({ view, onNav, user, onLogout }: { view:View; onNav:(v:View)=>v
           <>
             {secHdr(<ArrowLeftRight size={15}/>, "Borrowing", borOpen, ()=>setBorOpen(!borOpen))}
             {borOpen && <>
-              {subItem("Borrow Books",     view==="borrowing" || view==="issue", ()=>onNav("borrowing"))}
+              {subItem("Borrow Books",      view==="borrowing" || view==="issue", ()=>onNav("borrowing"))}
               {user.role === "Librarian" && subItem("Return Books", view==="returns", ()=>onNav("returns"))}
-              {subItem("Borrowing History",false,                ()=>onNav("borrowing"))}
-              {subItem("Reservations",     view==="reservations",  ()=>onNav("reservations"))}
+              {subItem("Borrowing History", false,               ()=>onNav("borrowing"))}
             </>}
           </>
+        )}
+        {user.role === "LibraryMember" && (
+          <>
+            {subItem("My Reservations", view==="myReservations", ()=>onNav("myReservations"))}
+          </>
+        )}
+        {(user.role === "Librarian" || user.role === "Admin") && (
+          <>{subItem("Reservations", view==="reservations", ()=>onNav("reservations"))}</>
         )}
         {secHdr(<Users size={15}/>, "Members", memOpen, ()=>setMemOpen(!memOpen))}
         {memOpen && <>
@@ -632,13 +640,14 @@ function AppContent() {
   const goReservations = ()              => setView("reservations");
 
   const goNav = (v: View) => {
-    if (v==="dashboard")    setView("dashboard");
-    if (v==="books")        setView("books");
-    if (v==="borrowing")    setView("borrowing");
-    if (v==="returns")      setView("returns");
-    if (v==="reservations") setView("reservations");
-    if (v==="profile")      setView("profile");
-    if (v==="catalog")      setView("catalog");
+    if (v==="dashboard")      setView("dashboard");
+    if (v==="books")          setView("books");
+    if (v==="borrowing")      setView("borrowing");
+    if (v==="returns")        setView("returns");
+    if (v==="reservations")   setView("reservations");
+    if (v==="profile")        setView("profile");
+    if (v==="catalog")        setView("catalog");
+    if (v==="myReservations") setView("myReservations");
   };
 
   if (!user) {
@@ -650,7 +659,7 @@ function AppContent() {
 
   return (
     <Shell view={view} onNav={goNav} user={user} onLogout={handleLogout}>
-      {view==="dashboard" && user.role === "LibraryMember" && <LibraryMemberDashboard />}
+      {view==="dashboard" && user.role === "LibraryMember" && <LibraryMemberDashboard onGoToReservations={() => setView("myReservations")} />}
       {view==="dashboard" && user.role !== "LibraryMember" && <DashboardOverview onGoBooks={goBooks} onGoBorrowing={goBorrowing}/>}
       {view==="books" || view==="add" || view==="edit" || view==="details"
         ? <BookCatalogPage userRole={user.role} />
@@ -667,6 +676,9 @@ function AppContent() {
       )}
       {view==="reservations" && (user.role === "Librarian" || user.role === "Admin") && (
         <ReservationManagementPage />
+      )}
+      {view==="myReservations" && user.role === "LibraryMember" && (
+        <MyReservationsPage />
       )}
       {view==="profile" && <ProfilePage />}
       {view==="catalog" && <MemberCatalogPage />}

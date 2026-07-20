@@ -102,6 +102,76 @@ async function cancelReservation(req, res, next) {
 }
 
 /**
+ * GET /api/reservations/self
+ * List the authenticated member's own reservations.
+ */
+async function listMyReservations(req, res, next) {
+  try {
+    const { page, limit, status } = req.query;
+    const result = await reservationService.listReservations({
+      page:    parseInt(page)  || 1,
+      limit:   parseInt(limit) || 50,
+      status:  status || "",
+      memberId: req.user.memberId,
+    });
+    res.json(result);
+  } catch (err) {
+    if (err.statusCode) return res.status(err.statusCode).json({ error: err.message });
+    next(err);
+  }
+}
+
+/**
+ * POST /api/reservations/self
+ * Member self-service: reserve an unavailable book for themselves.
+ * Member info is extracted from the authenticated user.
+ */
+async function reserveForSelf(req, res, next) {
+  try {
+    const user = req.user;
+    if (!user.memberId) {
+      return res.status(400).json({ error: "No member profile linked to this account." });
+    }
+    const { bookId } = req.body;
+    if (!bookId) {
+      return res.status(400).json({ error: "Book ID is required." });
+    }
+
+    const record = await reservationService.reserveForSelf({
+      bookId,
+      memberId:    user.memberId,
+      memberName:  user.fullName,
+      memberEmail: user.email,
+      memberType:  user.memberType || "student",
+    });
+    res.status(201).json({ message: "Reservation created successfully.", record });
+  } catch (err) {
+    if (err.statusCode) {
+      return res.status(err.statusCode).json({ error: err.message, errors: err.errors });
+    }
+    next(err);
+  }
+}
+
+/**
+ * PATCH /api/reservations/self/:id/cancel
+ * Member self-service: cancel their own reservation.
+ */
+async function cancelMyReservation(req, res, next) {
+  try {
+    const user = req.user;
+    if (!user.memberId) {
+      return res.status(400).json({ error: "No member profile linked to this account." });
+    }
+    const record = await reservationService.cancelMyReservation(req.params.id, user.memberId);
+    res.json({ message: "Reservation cancelled.", record });
+  } catch (err) {
+    if (err.statusCode) return res.status(err.statusCode).json({ error: err.message });
+    next(err);
+  }
+}
+
+/**
  * PATCH /api/reservations/:id/complete
  */
 async function markCompleted(req, res, next) {
@@ -149,6 +219,9 @@ module.exports = {
   approveReservation,
   rejectReservation,
   cancelReservation,
+  listMyReservations,
+  reserveForSelf,
+  cancelMyReservation,
   markCompleted,
   notifyNextMember,
   deleteReservation,

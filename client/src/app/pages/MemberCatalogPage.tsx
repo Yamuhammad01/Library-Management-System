@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useBooks, useBookFilters } from "../hooks/useBooks";
 import { useBorrowForSelf } from "../hooks/useBorrowing";
+import { useReserveForSelf } from "../hooks/useReservations";
 import {
   BookCover, BookStatusBadge, CatBadge, iCls, iSty, PUR,
 } from "../components/BookUI";
@@ -27,14 +28,16 @@ function BookCard({ book, onBorrowSuccess }: { book: Book; onBorrowSuccess?: () 
   const isAvailable = book.availableCopies > 0;
   const [borrowMsg, setBorrowMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isBorrowing, setIsBorrowing] = useState(false);
+  const [isReserving, setIsReserving] = useState(false);
 
-  const borrowMutation = useBorrowForSelf();
+  const borrowMutation = useBorrowForSelf() as any;
+  const reserveMutation = useReserveForSelf() as any;
 
-  const handleBorrow = async () => {
+  const handleBorrow = async (): Promise<void> => {
     setIsBorrowing(true);
     setBorrowMsg(null);
     try {
-      const res = await borrowMutation.mutateAsync({ bookId: book._id } as any);
+      const res = await borrowMutation.mutateAsync({ bookId: book._id });
       setBorrowMsg({ type: "success", text: (res as any)?.message || `Borrowed "${book.title}" successfully!` });
       onBorrowSuccess?.();
     } catch (err: any) {
@@ -42,6 +45,22 @@ function BookCard({ book, onBorrowSuccess }: { book: Book; onBorrowSuccess?: () 
       setBorrowMsg({ type: "error", text: msg });
     } finally {
       setIsBorrowing(false);
+      setTimeout(() => setBorrowMsg(null), 4000);
+    }
+  };
+
+  const handleReserve = async (): Promise<void> => {
+    setIsReserving(true);
+    setBorrowMsg(null);
+    try {
+      const res = await reserveMutation.mutateAsync(book._id);
+      setBorrowMsg({ type: "success", text: (res as any)?.message || `Reserved "${book.title}" successfully!` });
+      onBorrowSuccess?.();
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || "Reservation failed. Please try again.";
+      setBorrowMsg({ type: "error", text: msg });
+    } finally {
+      setIsReserving(false);
       setTimeout(() => setBorrowMsg(null), 4000);
     }
   };
@@ -101,23 +120,33 @@ function BookCard({ book, onBorrowSuccess }: { book: Book; onBorrowSuccess?: () 
                 {book.availableCopies}/{book.totalCopies}
               </span>
             </div>
-            <button
-              onClick={handleBorrow}
-              disabled={isBorrowing || !isAvailable}
-              className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg text-white transition-all hover:opacity-90 disabled:opacity-60"
-              style={{
-                background: isAvailable ? PUR : "#D97706",
-                boxShadow: isAvailable ? `0 2px 8px ${PUR}55` : "0 2px 8px rgba(217,119,6,0.3)",
-              }}
-            >
-              {isBorrowing ? (
-                <span className="w-3 h-3 rounded-full border-2 border-white border-t-transparent animate-spin" />
-              ) : isAvailable ? (
-                <><BookPlus size={13} /> Borrow</>
-              ) : (
-                <><BookMarked size={13} /> Unavailable</>
-              )}
-            </button>
+            {isAvailable ? (
+              <button
+                onClick={handleBorrow}
+                disabled={isBorrowing}
+                className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg text-white transition-all hover:opacity-90 disabled:opacity-60"
+                style={{ background: PUR, boxShadow: `0 2px 8px ${PUR}55` }}
+              >
+                {isBorrowing ? (
+                  <span className="w-3 h-3 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                ) : (
+                  <><BookPlus size={13} /> Borrow</>
+                )}
+              </button>
+            ) : (
+              <button
+                onClick={handleReserve}
+                disabled={isReserving}
+                className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg text-white transition-all hover:opacity-90 disabled:opacity-60"
+                style={{ background: "#D97706", boxShadow: "0 2px 8px rgba(217,119,6,0.3)" }}
+              >
+                {isReserving ? (
+                  <span className="w-3 h-3 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                ) : (
+                  <><BookMarked size={13} /> Reserve</>
+                )}
+              </button>
+            )}
           </div>
 
           {/* Feedback message */}

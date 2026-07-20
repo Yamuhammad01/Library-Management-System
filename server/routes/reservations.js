@@ -9,6 +9,9 @@ const {
   approveReservation,
   rejectReservation,
   cancelReservation,
+  listMyReservations,
+  reserveForSelf,
+  cancelMyReservation,
   markCompleted,
   notifyNextMember,
   deleteReservation,
@@ -22,6 +25,11 @@ router.get("/stats", authorize("Librarian", "Admin"), getReservationStats);
 
 // Notify next in queue for a book — Librarian only
 router.post("/notify-next/:bookId", authorize("Librarian", "Admin"), notifyNextMember);
+
+// Member self-service — authenticated only (no role gate)
+router.get("/self",              listMyReservations);
+router.post("/self",             reserveForSelf);
+router.patch("/self/:id/cancel", cancelMyReservation);
 
 // Standard CRUD — Librarian + Admin
 router.use(authorize("Librarian", "Admin"));

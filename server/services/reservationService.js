@@ -19,6 +19,7 @@ async function listReservations({
   search = "",
   status = "",
   memberType = "",
+  memberId = "",
 } = {}) {
   const filter = {};
 
@@ -35,6 +36,7 @@ async function listReservations({
 
   if (status.trim()) filter.status = status;
   if (memberType.trim()) filter.memberType = memberType;
+  if (memberId.trim()) filter.memberId = memberId;
 
   const total      = await Reservation.countDocuments(filter);
   const totalPages = Math.max(1, Math.ceil(total / limit));
@@ -182,6 +184,66 @@ async function cancelReservation(id) {
   return record;
 }
 
+/* ─────────────────────── MEMBER SELF-SERVICE ─────────────────── */
+/**
+ * Create a reservation for the authenticated member.
+ * Enforces the rule: members cannot reserve books that are currently available.
+ * Member info comes from the JWT (req.user), not the request body.
+ */
+async function reserveForSelf({
+  bookId,
+  memberId,
+  memberName,
+  memberEmail = "",
+  memberType = "student",
+}) {
+  if (!bookId) throw makeErr("Book ID is required.", 400);
+
+  // Book must exist
+  const book = await Book.findById(bookId);
+  if (!book) throw makeErr("Book not found.", 404);
+
+  // Members cannot reserve books that are currently available
+  if (book.availableCopies > 0) {
+    throw makeErr("This book is currently available — please borrow it instead.", 400);
+  }
+
+  // Delegate to the shared creation logic (handles dup-check + queue position)
+  return createReservation({
+    bookId:        book._id.toString(),
+    bookTitle:     book.title,
+    bookCoverColor: book.coverColor || "#6D28D9",
+    isbn:          book.isbn || "",
+    memberId,
+    memberName,
+    memberEmail,
+    memberType,
+  });
+}
+
+/**
+ * Cancel a reservation owned by the authenticated member.
+ * Enforces ownership: members can only cancel their own reservations.
+ */
+async function cancelMyReservation(id, memberId) {
+  if (!id) throw makeErr("Reservation ID is required.", 400);
+  if (!memberId) throw makeErr("Member ID is required.", 400);
+
+  const record = await Reservation.findById(id);
+  if (!record) throw makeErr("Reservation not found.", 404);
+
+  if (record.memberId !== memberId) {
+    throw makeErr("You can only cancel your own reservations.", 403);
+  }
+  if (["completed", "rejected", "cancelled"].includes(record.status)) {
+    throw makeErr(`Cannot cancel a reservation with status '${record.status}'.`, 400);
+  }
+
+  record.status = "cancelled";
+  await record.save();
+  return record;
+}
+
 /* ─────────────────────── MARK COMPLETED ──────────────────────── */
 /**
  * Mark a reservation as completed (book picked up / issued).
@@ -249,6 +311,8 @@ module.exports = {
   approveReservation,
   rejectReservation,
   cancelReservation,
+  reserveForSelf,
+  cancelMyReservation,
   markCompleted,
   notifyNextMember,
   deleteReservation,

@@ -10,6 +10,9 @@ import {
   markReservationCompleted,
   notifyNextMember,
   deleteReservation,
+  fetchMyReservations,
+  reserveForSelf,
+  cancelMyReservation,
 } from "../services/api";
 
 /* ─── Query: stat cards ─── */
@@ -83,4 +86,29 @@ export function useNotifyNextMember() {
 
 export function useDeleteReservation() {
   return useReservationMutation((id) => deleteReservation(id));
+}
+
+/* ─── Member Self-Service ─── */
+
+export function useMyReservations({ page = 1, status = "" } = {}) {
+  return useQuery({
+    queryKey: ["reservations", "my", { page, status }],
+    queryFn:  () => fetchMyReservations({ page, limit: 50, status }),
+    staleTime: 10000,
+    retry: 2,
+  });
+}
+
+export function useReserveForSelf() {
+  return useReservationMutation(
+    (bookId) => reserveForSelf(bookId),
+    ["dashboard", "member", "books"]
+  );
+}
+
+export function useCancelMyReservation() {
+  return useReservationMutation(
+    (id) => cancelMyReservation(id),
+    ["dashboard", "member", "books"]
+  );
 }

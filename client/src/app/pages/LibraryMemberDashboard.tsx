@@ -61,7 +61,7 @@ function StatCard({
 function SectionCard({
   title, icon, iconBg, iconColor, children, loading, error, empty, emptyMessage,
 }: {
-  title: string; icon: React.ReactNode; iconBg: string; iconColor: string;
+  title: React.ReactNode; icon: React.ReactNode; iconBg: string; iconColor: string;
   children: React.ReactNode; loading?: boolean; error?: boolean;
   empty?: boolean; emptyMessage?: string;
 }) {
@@ -77,7 +77,11 @@ function SectionCard({
         >
           {icon}
         </div>
-        <p className="text-sm font-semibold text-gray-800">{title}</p>
+        {typeof title === "string" ? (
+          <p className="text-sm font-semibold text-gray-800">{title}</p>
+        ) : (
+          <div className="flex-1">{title}</div>
+        )}
       </div>
       {loading ? (
         <div className="flex flex-col gap-2">
@@ -247,7 +251,7 @@ function RecentlyBorrowedRow({
 }
 
 /* ─────────────────── MAIN DASHBOARD ─────────────────── */
-export default function LibraryMemberDashboard() {
+export default function LibraryMemberDashboard({ onGoToReservations }: { onGoToReservations?: () => void } = {}) {
   const { data, isLoading, isError, refetch } = useMemberDashboard();
 
   const currentlyBorrowed = data?.currentlyBorrowed || [];
@@ -355,7 +359,20 @@ export default function LibraryMemberDashboard() {
 
         {/* Active Reservations */}
         <SectionCard
-          title="Active Reservations"
+          title={
+            <div className="flex items-center justify-between w-full">
+              <span>Active Reservations</span>
+              {onGoToReservations && (
+                <button
+                  onClick={onGoToReservations}
+                  className="text-xs font-semibold hover:underline"
+                  style={{ color: PUR }}
+                >
+                  View All →
+                </button>
+              )}
+            </div>
+          }
           icon={<BookMarked size={16} />}
           iconBg="#ECFDF5"
           iconColor="#059669"

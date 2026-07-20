@@ -213,6 +213,27 @@ export async function deleteReservation(id) {
   return data; // { message }
 }
 
+// ─── Member Self-Service Reservations API ───
+
+export async function fetchMyReservations({ page = 1, limit = 50, status = "" } = {}) {
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+  if (status) params.set("status", status);
+  const { data } = await api.get(`/reservations/self?${params.toString()}`);
+  return data; // { records, total, page, totalPages }
+}
+
+export async function reserveForSelf(bookId) {
+  const { data } = await api.post("/reservations/self", { bookId });
+  return data; // { message, record }
+}
+
+export async function cancelMyReservation(id) {
+  const { data } = await api.patch(`/reservations/self/${id}/cancel`);
+  return data; // { message, record }
+}
+
 // ─── Profile API ───
 
 export async function fetchProfile() {
