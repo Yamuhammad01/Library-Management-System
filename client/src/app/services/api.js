@@ -139,6 +139,16 @@ export async function fetchReturnStats() {
   return data;
 }
 
+export async function fetchReturnHistory({ page = 1, limit = 10, search = "", memberType = "" } = {}) {
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+  if (search) params.set("search", search);
+  if (memberType) params.set("memberType", memberType);
+  const { data } = await api.get(`/borrowing/return-history?${params.toString()}`);
+  return data; // { records, total, page, totalPages }
+}
+
 export async function renewLoan(id, dueDate) {
   const { data } = await api.post(`/borrowing/${id}/renew`, { dueDate });
   return data; // { message, record }

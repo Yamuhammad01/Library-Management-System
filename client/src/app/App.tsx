@@ -11,6 +11,7 @@ import ProfilePage from "./pages/ProfilePage";
 import MemberCatalogPage from "./pages/MemberCatalogPage";
 import MyReservationsPage from "./pages/MyReservationsPage";
 import MyBorrowingHistoryPage from "./pages/MyBorrowingHistoryPage";
+import ReturnHistoryPage from "./pages/ReturnHistoryPage";
 import {
   BookOpen, Search, Plus, Download, Eye, Pencil, Trash2,
   ChevronLeft, ChevronRight, X, AlertCircle, CheckCircle2,
@@ -43,7 +44,7 @@ type BorrowTab     = "active"    | "history"   | "reservations";
 type ActiveSection = "dashboard" | "books"     | "borrowing";
 type View =
   | "dashboard" | "books" | "add" | "edit" | "details"
-  | "borrowing" | "issue" | "returns" | "reservations" | "profile" | "catalog" | "myReservations" | "myBorrowingHistory";
+  | "borrowing" | "issue" | "returns" | "returnHistory" | "reservations" | "profile" | "catalog" | "myReservations" | "myBorrowingHistory";
 
 interface BorrowRecord {
   id: number; bookId: number; bookTitle: string; bookCoverColor: string;
@@ -107,11 +108,13 @@ function fmtDate(d: string) {
 function Sidebar({ view, onNav, user, onLogout }: { view:View; onNav:(v:View)=>void; user:{name:string;role:string}; onLogout:()=>void }) {
   const [catOpen, setCatOpen] = useState(true);
   const [borOpen, setBorOpen] = useState(true);
+  const [retOpen, setRetOpen] = useState(true);
   const [memOpen, setMemOpen] = useState(false);
 
   const active =
     view === "dashboard" ? "dashboard" :
     (view === "books" || view === "add" || view === "edit" || view === "details") ? "books" :
+    (view === "returns" || view === "returnHistory") ? "returnManagement" :
     "borrowing";
 
   const navItem = (icon:React.ReactNode, label:string, isActive:boolean, onClick:()=>void) => (
@@ -182,6 +185,16 @@ function Sidebar({ view, onNav, user, onLogout }: { view:View; onNav:(v:View)=>v
           <>
             {subItem("My Borrowing History", view==="myBorrowingHistory", ()=>onNav("myBorrowingHistory"))}
             {subItem("My Reservations", view==="myReservations", ()=>onNav("myReservations"))}
+          </>
+        )}
+        {/* Return Management Section - separate top-level section */}
+        {(user.role === "Librarian" || user.role === "Admin") && (
+          <>
+            {secHdr(<RotateCcw size={15}/>, "Return Management", retOpen, ()=>setRetOpen(!retOpen))}
+            {retOpen && <>
+              {subItem("Return Books",   view==="returns",       ()=>onNav("returns"))}
+              {subItem("Return History", view==="returnHistory", ()=>onNav("returnHistory"))}
+            </>}
           </>
         )}
         {(user.role === "Librarian" || user.role === "Admin") && (
@@ -646,6 +659,7 @@ function AppContent() {
     if (v==="books")             setView("books");
     if (v==="borrowing")         setView("borrowing");
     if (v==="returns")           setView("returns");
+    if (v==="returnHistory")     setView("returnHistory");
     if (v==="reservations")      setView("reservations");
     if (v==="profile")           setView("profile");
     if (v==="catalog")           setView("catalog");
@@ -676,6 +690,9 @@ function AppContent() {
       )}
       {view==="returns" && user.role === "Librarian" && (
         <ReturnManagementPage userRole={user.role} />
+      )}
+      {view==="returnHistory" && (user.role === "Librarian" || user.role === "Admin") && (
+        <ReturnHistoryPage onBack={() => setView("returns")} />
       )}
       {view==="reservations" && (user.role === "Librarian" || user.role === "Admin") && (
         <ReservationManagementPage />

@@ -357,6 +357,46 @@ async function getMyBorrowingHistory({ memberId, page = 1, limit = 10, search = 
   };
 }
 
+/**
+ * Get return history (all returned records).
+ * For Librarian/Admin: returns all records with status "returned".
+ * Query params: page, limit, search, memberType
+ */
+async function getReturnHistory({ page = 1, limit = 10, search = "", memberType = "" }) {
+  const filter = { status: "returned" };
+
+  // Search across memberName, bookTitle, memberId, isbn
+  if (search.trim()) {
+    const q = search.trim();
+    filter.$or = [
+      { memberName: { $regex: q, $options: "i" } },
+      { bookTitle: { $regex: q, $options: "i" } },
+      { memberId: { $regex: q, $options: "i" } },
+      { isbn: { $regex: q, $options: "i" } },
+    ];
+  }
+
+  if (memberType.trim()) {
+    filter.memberType = memberType;
+  }
+
+  const total = await BorrowRecord.countDocuments(filter);
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const safePage = Math.min(page, totalPages);
+
+  const records = await BorrowRecord.find(filter)
+    .sort({ returnDate: -1 })
+    .skip((safePage - 1) * limit)
+    .limit(limit);
+
+  return {
+    records,
+    total,
+    page: safePage,
+    totalPages,
+  };
+}
+
 module.exports = {
   listBorrowRecords,
   getBorrowRecord,
@@ -367,4 +407,5 @@ module.exports = {
   renewLoan,
   deleteBorrowRecord,
   getMyBorrowingHistory,
+  getReturnHistory,
 };

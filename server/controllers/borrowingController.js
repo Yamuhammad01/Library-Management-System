@@ -212,6 +212,25 @@ async function getMyBorrowingHistory(req, res, next) {
   }
 }
 
+/**
+ * GET /api/borrowing/return-history
+ * Get all returned records with pagination, search, filters.
+ */
+async function getReturnHistory(req, res, next) {
+  try {
+    const { page, limit, search, memberType } = req.query;
+    const result = await borrowingService.getReturnHistory({
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || 10,
+      search: search || "",
+      memberType: memberType || "",
+    });
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   listBorrowRecords,
   getBorrowRecord,
@@ -223,4 +242,5 @@ module.exports = {
   renewLoan,
   deleteBorrowRecord,
   getMyBorrowingHistory,
+  getReturnHistory,
 };

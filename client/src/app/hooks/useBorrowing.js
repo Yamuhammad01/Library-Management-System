@@ -6,6 +6,7 @@ import {
   updateBorrowRecord,
   returnBook,
   fetchReturnStats,
+  fetchReturnHistory,
   renewLoan,
   deleteBorrowRecord,
   borrowForSelf,
@@ -65,6 +66,15 @@ export function useReturnStats() {
   return useQuery({
     queryKey: ["returnStats"],
     queryFn: () => fetchReturnStats(),
+    staleTime: 10000,
+    retry: 2,
+  });
+}
+
+export function useReturnHistory({ page = 1, limit = 10, search = "", memberType = "" } = {}) {
+  return useQuery({
+    queryKey: ["returnHistory", { page, limit, search, memberType }],
+    queryFn: () => fetchReturnHistory({ page, limit, search, memberType }),
     staleTime: 10000,
     retry: 2,
   });

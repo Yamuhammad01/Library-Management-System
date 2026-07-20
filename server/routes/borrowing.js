@@ -12,6 +12,7 @@ const {
   renewLoan,
   deleteBorrowRecord,
   getMyBorrowingHistory,
+  getReturnHistory,
 } = require("../controllers/borrowingController");
 
 // All borrowing routes require authentication
@@ -19,6 +20,7 @@ router.use(authenticate);
 
 // Return management endpoints (Librarian only)
 router.get("/return-stats", authorize("Librarian"), getReturnStats);
+router.get("/return-history", authorize("Librarian", "Admin"), getReturnHistory);
 router.post("/:id/return", authorize("Librarian"), returnBook);
 
 // Member self-service borrowing (LibraryMembers can borrow for themselves)
