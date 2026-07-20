@@ -1,7 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import LoginPage from "./LoginPage";
-import RegisterPage from "./RegisterPage";
 import BookCatalogPage from "./pages/BookCatalogPage";
 import BorrowingManagementPage from "./pages/BorrowingManagementPage";
 import ReturnManagementPage from "./pages/ReturnManagementPage";
@@ -32,7 +30,7 @@ import {
   useCategoryData,
 } from "./hooks/useDashboard";
 import { useBooks } from "./hooks/useBooks";
-import { fetchMe } from "./services/api";
+import AuthGuard from "./components/AuthGuard";
 import {
   BookCover, BookStatusBadge, BorrowBadge, DaysLeftPill, CatBadge,
   Avatar, Fld, iCls, iSty, IconBtn, PageBtn, PUR, TODAY, addDays,
@@ -615,38 +613,14 @@ function DashboardOverview({ onGoBooks, onGoBorrowing }:{ onGoBooks:()=>void; on
 /* ──────────────────────── APP ROOT ─────────────────────────── */
 const queryClient = new QueryClient();
 
-function AppContent() {
-  const [user, setUser] = useState<{name:string;role:string;email:string}|null>(null);
-  const [view,    setView]   = useState<View>("borrowing");
-  const [selBook, setSel]    = useState<Book|null>(null);
-  const [editOrig,setOrig]   = useState<any>(null);
-  const [showRegister, setShowRegister] = useState(false);
-
-  // Token persistence: check for existing token on mount
-  useEffect(() => {
-    const token = localStorage.getItem("unilib_token");
-    if (token) {
-      fetchMe()
-        .then((data) => {
-          setUser({ name: data.user.fullName, role: data.user.role, email: data.user.email });
-          setView("dashboard");
-        })
-        .catch(() => {
-          localStorage.removeItem("unilib_token");
-        });
-    }
-  }, []);
-
-  const handleLogin = (u: {name:string;role:string;email:string}) => {
-    setUser(u);
-    setView("dashboard");
-    setShowRegister(false);
-  };
+function AuthenticatedApp({ user, setUser }: { user: {name:string;role:string;email:string}; setUser: (u: {name:string;role:string;email:string}) => void }) {
+  const [view, setView] = useState<View>("dashboard");
+  const [selBook, setSel] = useState<Book|null>(null);
+  const [editOrig, setOrig] = useState<any>(null);
 
   const handleLogout = () => {
-    setUser(null);
     localStorage.removeItem("unilib_token");
-    setView("borrowing");
+    // AuthGuard will handle redirect to login
   };
 
   const goBooks        = ()              => { setSel(null); setView("books"); };
@@ -666,13 +640,6 @@ function AppContent() {
     if (v==="myReservations")    setView("myReservations");
     if (v==="myBorrowingHistory") setView("myBorrowingHistory");
   };
-
-  if (!user) {
-    if (showRegister) {
-      return <RegisterPage onBackToLogin={() => setShowRegister(false)} />;
-    }
-    return <LoginPage onLogin={handleLogin} onGoToRegister={() => setShowRegister(true)} />;
-  }
 
   return (
     <Shell view={view} onNav={goNav} user={user} onLogout={handleLogout}>
@@ -712,7 +679,9 @@ function AppContent() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppContent />
+      <AuthGuard onLogout={() => {}}>
+        {(user, setUser) => <AuthenticatedApp user={user} setUser={setUser} />}
+      </AuthGuard>
     </QueryClientProvider>
   );
 }

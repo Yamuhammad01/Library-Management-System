@@ -6,12 +6,16 @@ const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// ─── Auth Interceptor: attach JWT to every request ───
+// ─── Auth Interceptor: attach JWT + anti-cache headers to every request ───
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("unilib_token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  // Zero-trust: prevent browser from caching any API response
+  config.headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+  config.headers["Pragma"] = "no-cache";
+  config.headers["Expires"] = "0";
   return config;
 });
 

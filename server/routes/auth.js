@@ -9,6 +9,15 @@ const {
   changePassword,
 } = require("../controllers/authController");
 
+// Zero-trust: disable caching on all auth routes to prevent stale role data
+router.use((req, res, next) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
+  res.set("Surrogate-Control", "no-store");
+  next();
+});
+
 router.post("/register", register);
 router.post("/login", login);
 router.get("/me", authenticate, getMe);
