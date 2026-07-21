@@ -264,29 +264,33 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Member Type */}
-            <div className="flex flex-col gap-1.5">
-              <label style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>Member Type</label>
-              <div className="relative">
-                <GraduationCap size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <select value={memberType} onChange={e => setMemberType(e.target.value as "student" | "staff")}
-                  className={iCls} style={{ ...iSty, paddingLeft: 32, appearance: "auto" }}>
-                  <option value="student">Student</option>
-                  <option value="staff">Staff</option>
-                </select>
+            {/* Member Type - hidden for Librarian/Admin */}
+            {user.role === "LibraryMember" && (
+              <div className="flex flex-col gap-1.5">
+                <label style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>Member Type</label>
+                <div className="relative">
+                  <GraduationCap size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <select value={memberType} onChange={e => setMemberType(e.target.value as "student" | "staff")}
+                    className={iCls} style={{ ...iSty, paddingLeft: 32, appearance: "auto" }}>
+                    <option value="student">Student</option>
+                    <option value="staff">Staff</option>
+                  </select>
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Department */}
-            <div className="flex flex-col gap-1.5">
-              <label style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>Department</label>
-              <div className="relative">
-                <Building2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input value={department} onChange={e => setDepartment(e.target.value)}
-                  placeholder="e.g. Computer Science"
-                  className={iCls} style={{ ...iSty, paddingLeft: 32 }} />
+            {/* Department - hidden for Librarian/Admin */}
+            {user.role === "LibraryMember" && (
+              <div className="flex flex-col gap-1.5">
+                <label style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>Department</label>
+                <div className="relative">
+                  <Building2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input value={department} onChange={e => setDepartment(e.target.value)}
+                    placeholder="e.g. Computer Science"
+                    className={iCls} style={{ ...iSty, paddingLeft: 32 }} />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Registration Date (read-only) */}
             <div className="flex flex-col gap-1.5">

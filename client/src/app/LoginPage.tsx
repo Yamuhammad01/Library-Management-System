@@ -269,60 +269,7 @@ export default function LoginPage({ onLogin, onGoToRegister }: LoginPageProps) {
             </button>
           </div>
 
-          {/* Quick login buttons */}
-          <div style={{ marginTop: 24 }}>
-            <p
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                color: "#9CA3AF",
-                letterSpacing: "0.06em",
-                marginBottom: 10,
-                textAlign: "center",
-              }}
-            >
-              QUICK LOGIN (DEMO)
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {[
-                { name: "Sarah Johnson (Librarian)", email: "librarian@unilib.edu", password: "password123" },
-                { name: "Admin User (Admin)", email: "admin@unilib.edu", password: "admin123" },
-              ].map((u) => (
-                <button
-                  key={u.email}
-                  onClick={() => quickFill(u.email, u.password)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "8px 14px",
-                    borderRadius: 10,
-                    border: "1.5px solid #F3F4F6",
-                    background: "#FAFAFA",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                    fontSize: 12,
-                    textAlign: "left",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = PUR;
-                    e.currentTarget.style.background = "#F5F3FF";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "#F3F4F6";
-                    e.currentTarget.style.background = "#FAFAFA";
-                  }}
-                >
-                  <div>
-                    <span style={{ fontWeight: 600, color: "#374151" }}>{u.name}</span>
-                  </div>
-                  <span style={{ fontSize: 10, color: PUR, fontWeight: 600 }}>
-                    Fill →
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
+          
         </div>
       </div>
     </div>
