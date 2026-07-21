@@ -177,9 +177,6 @@ function Sidebar({ view, onNav, user, onLogout }: { view:View; onNav:(v:View)=>v
             </>}
           </>
         )}
-        {(user.role === "Librarian" || user.role === "Admin") && (
-          <>{navItem(<BookMarked size={15}/>, "Reservations", view==="reservations", ()=>onNav("reservations"))}</>
-        )}
         {navItem(<User size={15}/>, "Profile", view==="profile", ()=>onNav("profile"))}
         <button onClick={onLogout} className="flex items-center gap-2.5 py-2 w-full text-left rounded-lg transition-colors"
           style={{color:"#EF4444",fontSize:13,fontWeight:500,padding:"8px 16px"}}>

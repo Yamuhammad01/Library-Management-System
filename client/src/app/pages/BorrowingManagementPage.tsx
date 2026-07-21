@@ -19,7 +19,7 @@ import {
 import type { Book, BorrowStatus } from "../components/BookUI";
 
 /* ─────────────────────────── TYPES ─────────────────────────── */
-type BorrowTab = "active" | "history" | "reservations";
+type BorrowTab = "active" | "history";
 
 interface BorrowRecord {
   _id: string;
@@ -81,7 +81,6 @@ export default function BorrowingManagementPage({ onIssue }: { onIssue: () => vo
       active: all.filter(r => r.status === "borrowed").length,
       overdue: all.filter(r => r.status === "overdue").length,
       dueWeek: all.filter(r => r.status === "borrowed" && getDaysLeft(r.dueDate) >= 0 && getDaysLeft(r.dueDate) <= 7).length,
-      reserved: all.filter(r => r.status === "reserved").length,
     };
   }, [records]);
 
@@ -122,14 +121,12 @@ export default function BorrowingManagementPage({ onIssue }: { onIssue: () => vo
   const tabDef: { id: BorrowTab; label: string; count: number }[] = [
     { id: "active", label: "Active Borrowings", count: stats.active + stats.overdue },
     { id: "history", label: "Borrow History", count: data?.records?.filter((r: BorrowRecord) => r.status === "returned").length || 0 },
-    { id: "reservations", label: "Reservations", count: stats.reserved },
   ];
 
   const STAT_CARDS = [
     { label: "Active Borrowings", value: stats.active, icon: <BookMarked size={20} />, bg: "#EDE9FE", color: PUR, trend: "+3 today" },
     { label: "Overdue", value: stats.overdue, icon: <AlertTriangle size={20} />, bg: "#FEF2F2", color: "#DC2626", trend: "Needs attention" },
     { label: "Due This Week", value: stats.dueWeek, icon: <Clock size={20} />, bg: "#FFF7ED", color: "#D97706", trend: "Within 7 days" },
-    { label: "Reservations", value: stats.reserved, icon: <ClipboardList size={20} />, bg: "#EFF6FF", color: "#2563EB", trend: "Awaiting pickup" },
   ];
 
   return (
@@ -161,7 +158,7 @@ export default function BorrowingManagementPage({ onIssue }: { onIssue: () => vo
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(4,1fr)" }}>
+      <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(3,1fr)" }}>
         {STAT_CARDS.map(s => (
           <div key={s.label} className="rounded-xl p-4 flex flex-col justify-between"
             style={{ background: "#fff", boxShadow: "0 1px 6px rgba(0,0,0,0.06)", minHeight: 115 }}>
