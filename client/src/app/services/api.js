@@ -277,4 +277,9 @@ export async function changePassword(currentPassword, newPassword) {
   return data; // { message }
 }
 
+export async function uploadAvatar(avatarBase64) {
+  const { data } = await api.put("/profile/avatar", { avatar: avatarBase64 });
+  return data; // { message, user }
+}
+
 export default api;

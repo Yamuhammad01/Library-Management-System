@@ -4,6 +4,7 @@ import {
   fetchProfile,
   updateProfile,
   changePassword,
+  uploadAvatar,
 } from "../services/api";
 import {
   Avatar, iCls, iSty, PUR,
@@ -13,6 +14,7 @@ import {
   Save, AlertCircle, CheckCircle2, Eye, EyeOff, Lock, Camera,
   RefreshCw, ArrowLeft,
 } from "lucide-react";
+import { ImageUpload } from "../components/ImageUpload";
 
 /* ─────────────────── HELPERS ─────────────────── */
 function fmtDate(d: string | Date | null | undefined) {
@@ -86,6 +88,22 @@ export default function ProfilePage() {
     },
   });
 
+  // ── Upload avatar mutation ──
+  const avatarMutation = useMutation({
+    mutationFn: (base64: string) => uploadAvatar(base64),
+    onSuccess: () => {
+      setSuccessMsg("Profile picture updated successfully.");
+      setErrorMsg(null);
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      setTimeout(() => setSuccessMsg(null), 3000);
+    },
+    onError: (err: any) => {
+      const resp = err?.response?.data;
+      setErrorMsg(resp?.error || "Failed to upload profile picture.");
+      setSuccessMsg(null);
+    },
+  });
+
   // ── Change password mutation ──
   const passwordMutation = useMutation({
     mutationFn: () => changePassword(currentPassword, newPassword),
@@ -114,6 +132,10 @@ export default function ProfilePage() {
     setSuccessMsg(null);
     setFieldErrors({});
     updateMutation.mutate({ fullName, email, phoneNumber, department, memberType });
+  };
+
+  const handleUploadAvatar = async (base64: string) => {
+    await avatarMutation.mutateAsync(base64);
   };
 
   const handleChangePassword = (e: React.FormEvent) => {
@@ -218,11 +240,17 @@ export default function ProfilePage() {
           {/* Avatar + basic info */}
           <div className="flex items-center gap-4 pb-4 border-b border-gray-100">
             <div className="relative">
-              <Avatar name={user.fullName || ""} size={56} />
-              <button className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center border-2 border-white"
-                style={{ background: PUR, color: "#fff" }} title="Upload photo">
-                <Camera size={11} />
-              </button>
+              <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white shadow-md bg-gray-50">
+                {user.profilePicture ? (
+                  <img
+                    src={user.profilePicture}
+                    alt={user.fullName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Avatar name={user.fullName || ""} size={56} />
+                )}
+              </div>
             </div>
             <div>
               <p className="text-base font-bold text-gray-900">{user.fullName}</p>
@@ -316,17 +344,39 @@ export default function ProfilePage() {
           </form>
         </div>
 
-        {/* ─── RIGHT: Change Password ─── */}
-        <div className="rounded-xl p-5 flex flex-col gap-5" style={{ background: "#fff", boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
-          <div className="flex items-center gap-2 pb-4 border-b border-gray-100">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#FEF2F2", color: "#DC2626" }}>
-              <Lock size={15} />
+        {/* ─── RIGHT: Avatar Upload + Change Password ─── */}
+        <div className="flex flex-col gap-4">
+          {/* Avatar Upload Card */}
+          <div className="rounded-xl p-4" style={{ background: "#fff", boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
+            <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#ECFDF5", color: "#059669" }}>
+                <Camera size={14} />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-gray-900">Profile Photo</p>
+                <p className="text-[10px] text-gray-400">Upload or update your profile picture</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-bold text-gray-900">Change Password</p>
-              <p className="text-xs text-gray-400">Update your account password</p>
+            <div className="pt-3">
+              <ImageUpload
+                currentAvatar={user.profilePicture || null}
+                onUpload={handleUploadAvatar}
+                saving={avatarMutation.isPending}
+              />
             </div>
           </div>
+
+          {/* Change Password Card */}
+          <div className="rounded-xl p-5 flex flex-col gap-5" style={{ background: "#fff", boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
+            <div className="flex items-center gap-2 pb-4 border-b border-gray-100">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#FEF2F2", color: "#DC2626" }}>
+                <Lock size={15} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-gray-900">Change Password</p>
+                <p className="text-xs text-gray-400">Update your account password</p>
+              </div>
+            </div>
 
           <form onSubmit={handleChangePassword} className="flex flex-col gap-4">
             {/* Current Password */}
@@ -383,6 +433,7 @@ export default function ProfilePage() {
           </form>
         </div>
       </div>
+    </div>
     </div>
   );
 }

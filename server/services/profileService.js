@@ -50,6 +50,39 @@ async function updateProfile(userId, updates) {
 }
 
 /**
+ * Upload or replace profile picture (base64-encoded).
+ */
+async function uploadAvatar(userId, avatarBase64) {
+  const user = await User.findById(userId);
+  if (!user) {
+    const error = new Error("User not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Validate base64 format
+  const base64Pattern = /^data:image\/(jpeg|jpg|png|gif|webp);base64,/;
+  if (!base64Pattern.test(avatarBase64)) {
+    const error = new Error("Avatar must be a valid base64-encoded image (JPEG, PNG, GIF, or WebP).");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Check size (5MB max for base64 string)
+  const base64Data = avatarBase64.split(",")[1] || "";
+  if (base64Data.length > 5 * 1024 * 1024) {
+    const error = new Error("Avatar image must not exceed 5MB.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  user.profilePicture = avatarBase64;
+  await user.save();
+
+  return { user };
+}
+
+/**
  * Change password for authenticated user.
  */
 async function changePassword(userId, { currentPassword, newPassword }) {
@@ -76,5 +109,6 @@ async function changePassword(userId, { currentPassword, newPassword }) {
 module.exports = {
   getProfile,
   updateProfile,
+  uploadAvatar,
   changePassword,
 };

@@ -1,6 +1,29 @@
 const profileService = require("../services/profileService");
 
 /**
+ * PUT /api/profile/avatar
+ * Upload or replace the profile picture (base64).
+ */
+async function uploadAvatar(req, res) {
+  try {
+    const userId = req.user._id;
+    const { avatar } = req.body;
+
+    if (!avatar) {
+      return res.status(400).json({ error: "Avatar image is required." });
+    }
+
+    const result = await profileService.uploadAvatar(userId, avatar);
+    res.json({ message: "Profile picture updated successfully.", user: result.user });
+  } catch (err) {
+    if (err.statusCode) {
+      return res.status(err.statusCode).json({ error: err.message });
+    }
+    res.status(500).json({ error: "Failed to upload avatar." });
+  }
+}
+
+/**
  * GET /api/profile
  * Returns the authenticated user's profile.
  */
@@ -61,5 +84,6 @@ async function changePassword(req, res, next) {
 module.exports = {
   getProfile,
   updateProfile,
+  uploadAvatar,
   changePassword,
 };

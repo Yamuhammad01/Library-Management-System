@@ -4,11 +4,13 @@ const { authenticate } = require("../middleware/auth");
 const {
   getProfile,
   updateProfile,
+  uploadAvatar,
   changePassword,
 } = require("../controllers/profileController");
 
 router.get("/", authenticate, getProfile);
 router.put("/", authenticate, updateProfile);
+router.put("/avatar", authenticate, uploadAvatar);
 router.put("/change-password", authenticate, changePassword);
 
 module.exports = router;
