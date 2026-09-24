@@ -33,6 +33,18 @@ app.use((req, res, next) => {
   next();
 });
 
+// Health check
+app.get('/api/v1/health', (_req, res) => {
+  res.status(200).json({
+    success: true,
+    statusCode: 200,
+    message: 'Server is running',
+    data: {
+      environment: process.env.NODE_ENV || "development",
+      timestamp: new Date().toISOString(),
+    },
+  });
+});
 // Routes
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/auth", authRoutes);
