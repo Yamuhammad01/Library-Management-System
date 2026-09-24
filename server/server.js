@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "4mb" })); // base64 avatars exceed the 100kb default; Vercel caps request bodies at 4.5MB
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -45,6 +45,18 @@ app.get('/api/v1/health', (_req, res) => {
     },
   });
 });
+
+// Serverless-safe: ensure MongoDB is connected before data routes run.
+// The connection is cached in config/db.js, so this is a no-op once connected.
+app.use(async (_req, _res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Routes
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/auth", authRoutes);
@@ -59,9 +71,24 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal server error", message: err.message });
 });
 
-// Start server
-connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-});
+// Start the server only when this file is run directly (npm start / node server.js / port-listener hosts).
+// On Vercel the file is imported as a module and the platform handles HTTP, using the export below.
+if (require.main === module) {
+  connectDB()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error(`Failed to start server: ${err.message}`);
+      process.exit(1);
+    });
+} else {
+  // Imported by a host such as Vercel — warm the connection;
+  // the middleware above retries on every request if this fails.
+  connectDB().catch(() => {});
+}
+
+// Export the Express app (Vercel auto-detects this as the module's default export).
+module.exports = app;
