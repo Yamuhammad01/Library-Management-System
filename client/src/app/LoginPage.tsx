@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { BookOpen, Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
-import { loginUser } from "./services/api";
+import { loginUser, setAuthToken } from "./services/api";
 
 const PUR = "#6D28D9";
 
@@ -30,7 +30,7 @@ export default function LoginPage({ onLogin, onGoToRegister }: LoginPageProps) {
     try {
       const data = await loginUser(email.trim().toLowerCase(), password);
       // Save token
-      localStorage.setItem("unilib_token", data.token);
+      setAuthToken(data.token);
       onLogin({ name: data.user.fullName, role: data.user.role, email: data.user.email });
     } catch (err: any) {
       const msg = err?.response?.data?.error || "Invalid email or password. Please try again.";

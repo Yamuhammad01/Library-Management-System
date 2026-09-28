@@ -1,5 +1,34 @@
 import axios from "axios";
 
+/**
+ * Single source of truth for the stored session token.
+ * Every read/write of the session goes through these helpers.
+ */
+export const AUTH_TOKEN_KEY = "unilib_token";
+
+/**
+ * Fired when a protected endpoint answers 401 — i.e. the token is missing,
+ * expired or invalid. The UI listens for it and forces the user back to the
+ * login screen instead of leaving them in an authenticated shell with no data.
+ */
+export const AUTH_UNAUTHORIZED_EVENT = "unilib:unauthorized";
+
+export function getAuthToken() {
+  return localStorage.getItem(AUTH_TOKEN_KEY);
+}
+y
+
+
+
+
+export function setAuthToken(token) {
+  localStorage.setItem(AUTH_TOKEN_KEY, token);
+}
+
+export function clearAuthToken() {
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+}
+
 const api = axios.create({
   baseURL: (import.meta.env.VITE_API_URL || "http://localhost:5000/api").replace(/\/+$/, ""), // Vercel: set VITE_API_URL, e.g. https://your-api.vercel.app/api
   timeout: 10000,
@@ -8,9 +37,14 @@ const api = axios.create({
 
 // ─── Auth Interceptor: attach JWT + anti-cache headers to every request ───
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("unilib_token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  // `skipAuth` lets a call carry its own Authorization header (used by logout,
+  // which must target the session being closed rather than whatever token is
+  // currently in storage).
+  if (!config.skipAuth) {
+    const token = getAuthToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
   // Zero-trust: prevent browser from caching any API response
   config.headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
@@ -18,6 +52,23 @@ api.interceptors.request.use((config) => {
   config.headers["Expires"] = "0";
   return config;
 });
+
+// ─── Session Expiry Interceptor ───
+// The auth routes handle their own errors (wrong password, dead token on boot),
+// so they are excluded to avoid duplicate/confusing session handling.
+const AUTH_ROUTES = ["/auth/login", "/auth/register", "/auth/logout", "/auth/me"];
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    const url = error?.config?.url || "";
+    if (status === 401 && !AUTH_ROUTES.some((route) => url.includes(route))) {
+      window.dispatchEvent(new Event(AUTH_UNAUTHORIZED_EVENT));
+    }
+    // Keep the original error so existing component-level handling is unchanged.
+    return Promise.reject(error);
+  }
+);
 
 // ─── Auth API ───
 
@@ -36,8 +87,14 @@ export async function fetchMe() {
   return data; // { user }
 }
 
-export async function logoutUser() {
-  const { data } = await api.post("/auth/logout");
+export async function logoutUser(token) {
+  // The token is passed explicitly and auth is skipped so the call always
+  // targets the session being closed, even though the stored session has
+  // already been cleared locally (see AuthGuard.logout).
+  const { data } = await api.post("/auth/logout", null, {
+    skipAuth: true,
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
   return data;
 }
 

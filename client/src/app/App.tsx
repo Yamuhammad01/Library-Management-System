@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import BookCatalogPage from "./pages/BookCatalogPage";
 import BorrowingManagementPage from "./pages/BorrowingManagementPage";
 import ReturnManagementPage from "./pages/ReturnManagementPage";
@@ -32,7 +32,7 @@ import {
 } from "./hooks/useDashboard";
 import { useBooks } from "./hooks/useBooks";
 import { useDialogA11y } from "./hooks/useDialogA11y";
-import { logoutUser } from "./services/api";
+import { queryClient } from "./services/queryClient";
 import AuthGuard from "./components/AuthGuard";
 import {
   BookCover, BookStatusBadge, BorrowBadge, DaysLeftPill, CatBadge,
@@ -665,23 +665,11 @@ function DashboardOverview({ onGoBooks, onGoBorrowing }:{ onGoBooks:()=>void; on
 }
 
 /* ──────────────────────── APP ROOT ─────────────────────────── */
-const queryClient = new QueryClient();
 
-function AuthenticatedApp({ user, setUser }: { user: {name:string;role:string;email:string}; setUser: (u: {name:string;role:string;email:string}) => void }) {
+function AuthenticatedApp({ user, setUser, logout }: { user: {name:string;role:string;email:string}; setUser: (u: {name:string;role:string;email:string}) => void; logout: () => void }) {
   const [view, setView] = useState<View>("dashboard");
   const [selBook, setSel] = useState<Book|null>(null);
   const [editOrig, setOrig] = useState<any>(null);
-
-  const handleLogout = async () => {
-    try {
-      await logoutUser();
-    } catch {
-      // ignore logout API errors
-    } finally {
-      localStorage.removeItem("unilib_token");
-      // AuthGuard will detect missing token and redirect to login
-    }
-  };
 
   const goBooks        = ()              => { setSel(null); setView("books"); };
   const goBorrowing    = ()              => setView("borrowing");
@@ -702,7 +690,7 @@ function AuthenticatedApp({ user, setUser }: { user: {name:string;role:string;em
   };
 
   return (
-    <Shell view={view} onNav={goNav} user={user} onLogout={handleLogout}>
+    <Shell view={view} onNav={goNav} user={user} onLogout={logout}>
       {view==="dashboard" && user.role === "LibraryMember" && <LibraryMemberDashboard onGoToReservations={() => setView("myReservations")} />}
       {view==="dashboard" && user.role !== "LibraryMember" && <DashboardOverview onGoBooks={goBooks} onGoBorrowing={goBorrowing}/>}
       {view==="books" || view==="add" || view==="edit" || view==="details"
@@ -739,8 +727,10 @@ function AuthenticatedApp({ user, setUser }: { user: {name:string;role:string;em
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthGuard onLogout={() => {}}>
-        {(user, setUser) => <AuthenticatedApp user={user} setUser={setUser} />}
+      <AuthGuard>
+        {(user, setUser, logout) => (
+          <AuthenticatedApp user={user} setUser={setUser} logout={logout} />
+        )}
       </AuthGuard>
     </QueryClientProvider>
   );

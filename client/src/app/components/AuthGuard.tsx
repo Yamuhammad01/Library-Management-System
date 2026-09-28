@@ -1,5 +1,12 @@
-import React, { useEffect, useState, ReactNode, Suspense, lazy } from "react";
-import { fetchMe } from "../services/api";
+import React, { useCallback, useEffect, useRef, useState, ReactNode, Suspense, lazy } from "react";
+import {
+  fetchMe,
+  logoutUser,
+  getAuthToken,
+  clearAuthToken,
+  AUTH_UNAUTHORIZED_EVENT,
+} from "../services/api";
+import { queryClient } from "../services/queryClient";
 import { BookOpen } from "lucide-react";
 
 const PUR = "#6D28D9";
@@ -10,9 +17,17 @@ interface User {
   email: string;
 }
 
+/**
+ * Ends the session: wipes the stored token + every cached API response, then
+ * hands control back to the login screen. Exposed to children so any screen
+ * (sidebar button, session expiry, …) can sign the user out.
+ */
+export type LogoutFn = (options?: { notifyServer?: boolean }) => void;
+
 interface AuthGuardProps {
-  children: (user: User, setUser: (u: User) => void) => ReactNode;
-  onLogout: () => void;
+  children: (user: User, setUser: (u: User) => void, logout: LogoutFn) => ReactNode;
+  /** Optional hook for the owner of <AuthGuard>; called once the session ends. */
+  onLogout?: () => void;
 }
 
 type AuthState =
@@ -31,16 +46,48 @@ export default function AuthGuard({ children, onLogout }: AuthGuardProps) {
   const [authState, setAuthState] = useState<AuthState>({ status: "loading" });
   const [showRegister, setShowRegister] = useState(false);
 
+  // Keep the owner callback in a ref so `logout` stays referentially stable.
+  const onLogoutRef = useRef(onLogout);
+  useEffect(() => {
+    onLogoutRef.current = onLogout;
+  }, [onLogout]);
+
+  /**
+   * Sign out. Order matters: the local session is destroyed first (token +
+   * cached per-user data + auth state) so the user always lands on the login
+   * screen immediately, even if the API is slow, offline or already rejects
+   * the token. Telling the server is a best-effort follow-up.
+   */
+  const logout = useCallback<LogoutFn>((options) => {
+    const token = getAuthToken();
+
+    clearAuthToken();
+    queryClient.clear(); // never leak the previous session's cached data
+    setShowRegister(false);
+    setAuthState({ status: "unauthenticated" });
+    onLogoutRef.current?.();
+
+    if (options?.notifyServer !== false && token) {
+      // Token is passed explicitly because storage has just been cleared.
+      logoutUser(token).catch(() => {
+        /* server unreachable or token already invalid — nothing left to do */
+      });
+    }
+  }, []);
+
   // On mount: verify token against server
   useEffect(() => {
-    const token = localStorage.getItem("unilib_token");
+    const token = getAuthToken();
     if (!token) {
       setAuthState({ status: "unauthenticated" });
       return;
     }
 
+    let cancelled = false;
+
     fetchMe()
       .then((data) => {
+        if (cancelled) return;
         const user: User = {
           name: data.user.fullName,
           role: data.user.role,
@@ -49,20 +96,28 @@ export default function AuthGuard({ children, onLogout }: AuthGuardProps) {
         setAuthState({ status: "authenticated", user });
       })
       .catch(() => {
-        localStorage.removeItem("unilib_token");
+        if (cancelled) return;
+        clearAuthToken();
         setAuthState({ status: "unauthenticated" });
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  // Session expiry: any protected call answering 401 ends the session and
+  // returns the user to the login screen. No server call needed — the token is
+  // already dead.
+  useEffect(() => {
+    const handleUnauthorized = () => logout({ notifyServer: false });
+    window.addEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized);
+    return () => window.removeEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized);
+  }, [logout]);
 
   const handleLogin = (user: User) => {
     setAuthState({ status: "authenticated", user });
     setShowRegister(false);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("unilib_token");
-    setAuthState({ status: "unauthenticated" });
-    onLogout();
   };
 
   // ─── Loading State ───
@@ -120,5 +175,13 @@ export default function AuthGuard({ children, onLogout }: AuthGuardProps) {
   }
 
   // ─── Authenticated State ───
-  return <>{children(authState.user, (u: User) => setAuthState({ status: "authenticated", user: u }))}</>;
+  return (
+    <>
+      {children(
+        authState.user,
+        (u: User) => setAuthState({ status: "authenticated", user: u }),
+        logout
+      )}
+    </>
+  );
 }
