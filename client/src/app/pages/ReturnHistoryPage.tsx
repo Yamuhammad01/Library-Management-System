@@ -78,21 +78,21 @@ export default function ReturnHistoryPage({ onBack }: { onBack?: () => void }) {
   const totalPages = data?.totalPages || 1;
 
   return (
-    <div className="p-6 flex flex-col gap-5">
+    <div className="p-4 sm:p-6 flex flex-col gap-5">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center gap-3">
           {onBack && (
             <button
               onClick={onBack}
-              className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 bg-white hover:bg-gray-50"
+              className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 bg-white hover:bg-gray-50 shrink-0"
             >
               <ArrowLeft size={15} className="text-gray-600" />
             </button>
           )}
-          <div>
-            <h1 className="font-extrabold text-xl text-gray-900">Return History</h1>
-            <p className="text-xs text-gray-400 mt-0.5">Library Catalog › Return Management › Return History</p>
+          <div className="min-w-0">
+            <h1 className="font-extrabold text-xl text-gray-900 truncate">Return History</h1>
+            <p className="text-xs text-gray-400 mt-0.5 truncate">Library Catalog › Return Management › Return History</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -108,7 +108,7 @@ export default function ReturnHistoryPage({ onBack }: { onBack?: () => void }) {
       </div>
 
       {/* Stats summary */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div
           className="rounded-xl p-4 flex flex-col justify-between"
           style={{ background: "#fff", boxShadow: "0 1px 6px rgba(0,0,0,0.06)", minHeight: 100 }}
@@ -146,17 +146,17 @@ export default function ReturnHistoryPage({ onBack }: { onBack?: () => void }) {
         className="rounded-2xl flex flex-col"
         style={{ background: "#fff", boxShadow: "0 2px 12px rgba(0,0,0,0.07)", border: "1px solid rgba(0,0,0,0.05)" }}
       >
-        <div className="flex items-center justify-between px-5 pt-5 pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-5 pt-5 pb-3">
           <div>
             <p className="text-sm font-bold text-gray-900">Return Records</p>
             <p className="text-xs text-gray-400">Complete history of all book returns</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
             {/* Member type filter */}
             <select
               value={memberType}
               onChange={(e) => { setMemberType(e.target.value); setPage(1); }}
-              className="text-sm outline-none rounded-xl border border-gray-200 bg-gray-50 focus:border-purple-600"
+              className="text-sm outline-none rounded-xl border border-gray-200 bg-gray-50 focus:border-purple-600 w-full sm:w-auto"
               style={{ padding: "8px 12px", color: "#374151" }}
             >
               <option value="">All Members</option>
@@ -164,14 +164,14 @@ export default function ReturnHistoryPage({ onBack }: { onBack?: () => void }) {
               <option value="staff">Staff</option>
             </select>
             {/* Search */}
-            <div className="relative">
+            <div className="relative w-full sm:w-[260px]">
               <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 placeholder="Search member, book, ISBN…"
-                className="text-sm outline-none rounded-xl border border-gray-200 bg-gray-50 focus:border-purple-600"
-                style={{ padding: "8px 12px 8px 30px", width: 260 }}
+                className="w-full text-sm outline-none rounded-xl border border-gray-200 bg-gray-50 focus:border-purple-600"
+                style={{ padding: "8px 12px 8px 30px" }}
               />
               {search && (
                 <button
@@ -186,7 +186,7 @@ export default function ReturnHistoryPage({ onBack }: { onBack?: () => void }) {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
+        <div className="table-scroll">
           <table className="w-full text-sm" style={{ borderCollapse: "collapse", minWidth: 800 }}>
             <thead>
               <tr style={{ background: "#FAFAFA", borderBottom: "1px solid #F3F4F6" }}>
@@ -299,13 +299,13 @@ export default function ReturnHistoryPage({ onBack }: { onBack?: () => void }) {
         {/* Pagination */}
         {totalPages > 1 && (
           <div
-            className="flex items-center justify-between px-5 py-4 border-t border-gray-100"
+            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-5 py-4 border-t border-gray-100"
             style={{ background: "#FAFAFA" }}
           >
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-gray-400 text-center sm:text-left">
               Showing {(page - 1) * limit + 1}–{Math.min(page * limit, total)} of {total} returns
             </p>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap justify-center">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}

@@ -95,13 +95,13 @@ function BooksPageView({ onAdd, onEdit, onDetails }: {
   };
 
   return (
-    <div className="p-6 flex flex-col gap-5">
-      <div className="flex items-start justify-between">
+    <div className="p-4 sm:p-6 flex flex-col gap-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="font-extrabold text-xl text-gray-900">All Books</h1>
           <p className="text-xs text-gray-400 mt-0.5">Library Catalog › Catalog › All Books</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button className="flex items-center gap-1.5 text-sm font-semibold text-gray-600 px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50">
             <Download size={14} /> Export
           </button>
@@ -113,8 +113,8 @@ function BooksPageView({ onAdd, onEdit, onDetails }: {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-48">
+      <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[200px] w-full sm:w-auto">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input value={search} onChange={e => handleSearch(e.target.value)}
             placeholder="Search by title, author, or ISBN…"
@@ -126,7 +126,7 @@ function BooksPageView({ onAdd, onEdit, onDetails }: {
           { val: stF, set: handleStatus, opts: ["available", "low-stock", "checked-out", "reserved"], ph: "All Status" },
         ].map((f, i) => (
           <select key={i} value={f.val} onChange={e => f.set(e.target.value)}
-            className="text-sm outline-none rounded-xl border border-gray-200 bg-white appearance-none"
+            className="text-sm outline-none rounded-xl border border-gray-200 bg-white appearance-none w-full sm:w-auto"
             style={{
               padding: "9px 28px 9px 12px", color: f.val ? "#111827" : "#9CA3AF",
               backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")",
@@ -137,7 +137,7 @@ function BooksPageView({ onAdd, onEdit, onDetails }: {
           </select>
         ))}
         {(search || catF || stF) && <button onClick={() => { setSearch(""); setCat(""); setSt(""); setPg(1); }}
-          className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"><X size={12} /> Clear</button>}
+          className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 py-1.5 px-2 rounded-lg hover:bg-gray-100"><X size={12} /> Clear</button>}
       </div>
 
       <div className="rounded-2xl overflow-hidden" style={{ background: "#fff", boxShadow: "0 2px 12px rgba(0,0,0,0.07)", border: "1px solid rgba(0,0,0,0.05)" }}>
@@ -154,7 +154,7 @@ function BooksPageView({ onAdd, onEdit, onDetails }: {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            <div className="table-scroll">
               <table className="w-full text-sm" style={{ borderCollapse: "collapse", minWidth: 900 }}>
                 <thead>
                   <tr style={{ background: "#F9FAFB", borderBottom: "1px solid #F3F4F6" }}>
@@ -198,11 +198,11 @@ function BooksPageView({ onAdd, onEdit, onDetails }: {
                 </tbody>
               </table>
             </div>
-            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-              <p className="text-xs text-gray-500">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 border-t border-gray-100">
+              <p className="text-xs text-gray-500 text-center sm:text-left">
                 Showing <strong>{total === 0 ? 0 : (pg - 1) * 8 + 1}–{Math.min(pg * 8, total)}</strong> of <strong>{total}</strong> books
               </p>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 flex-wrap justify-center">
                 <PageBtn disabled={pg === 1} onClick={() => setPg(p => p - 1)}><ChevronLeft size={14} /></PageBtn>
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
                   <PageBtn key={n} active={n === pg} onClick={() => setPg(n)}>{n}</PageBtn>
@@ -291,14 +291,14 @@ function BookFormView({ mode, initial, originalBook, onBack }: {
   const isPending = createBook.isPending || updateBook.isPending;
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <div className="flex items-center gap-3 mb-5">
-        <button onClick={onBack} className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 bg-white hover:bg-gray-50">
+        <button onClick={onBack} className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 bg-white hover:bg-gray-50 shrink-0">
           <ArrowLeft size={15} className="text-gray-600" />
         </button>
-        <div>
-          <h1 className="font-extrabold text-xl text-gray-900">{mode === "add" ? "Add New Book" : "Edit Book"}</h1>
-          <p className="text-xs text-gray-400">Library Catalog › Catalog › {mode === "add" ? "Add New Book" : "Edit Book"}</p>
+        <div className="min-w-0">
+          <h1 className="font-extrabold text-xl text-gray-900 truncate">{mode === "add" ? "Add New Book" : "Edit Book"}</h1>
+          <p className="text-xs text-gray-400 truncate">Library Catalog › Catalog › {mode === "add" ? "Add New Book" : "Edit Book"}</p>
         </div>
       </div>
       {saved && <div className="mb-4 flex items-center gap-2 rounded-xl px-4 py-3" style={{ background: "#ECFDF5", border: "1px solid #A7F3D0" }}><CheckCircle2 size={15} style={{ color: "#059669" }} /><p className="text-sm font-medium" style={{ color: "#065F46" }}>Book {mode === "add" ? "added" : "updated"} successfully!</p></div>}
@@ -308,17 +308,17 @@ function BookFormView({ mode, initial, originalBook, onBack }: {
         <p className="text-sm font-medium" style={{ color: "#1E40AF" }}>{mode === "add" ? "Adding book..." : "Saving changes..."}</p>
       </div>}
 
-      <div className="flex gap-5">
-        <div className="shrink-0" style={{ width: 200 }}>
+      <div className="flex flex-col md:flex-row gap-5 items-start">
+        <div className="w-full md:w-[220px] shrink-0">
           <div className="rounded-2xl p-4 flex flex-col gap-4" style={{ background: "#fff", boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
             <p style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>Book Cover</p>
             <div className="flex flex-col items-center gap-3">
               <BookCover color={form.coverColor} title={form.title || "?"} size="lg" />
-              <p className="text-xs text-gray-500 text-center leading-snug">{form.title || "Book title preview"}</p>
+              <p className="text-xs text-gray-500 text-center leading-snug break-words max-w-full">{form.title || "Book title preview"}</p>
             </div>
             <div>
               <p style={{ fontSize: 11, fontWeight: 600, color: "#9CA3AF", marginBottom: 8 }}>COVER COLOR</p>
-              <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(5,1fr)" }}>
+              <div className="grid gap-2 grid-cols-5">
                 {COVER_PALETTE.map(c => (
                   <button key={c} onClick={() => set("coverColor")(c)}
                     className="w-7 h-7 rounded-lg flex items-center justify-center hover:scale-110 transition-transform"
@@ -335,15 +335,15 @@ function BookFormView({ mode, initial, originalBook, onBack }: {
             </div>
           </div>
         </div>
-        <div className="flex-1 rounded-2xl p-5 flex flex-col gap-4" style={{ background: "#fff", boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
-          <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr" }}>{inp("isbn", "ISBN", "e.g. 978-0-262-03384-8")}{inp("year", "Publication Year", "e.g. 2022")}</div>
+        <div className="w-full flex-1 rounded-2xl p-4 sm:p-5 flex flex-col gap-4 min-w-0" style={{ background: "#fff", boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{inp("isbn", "ISBN", "e.g. 978-0-262-03384-8")}{inp("year", "Publication Year", "e.g. 2022")}</div>
           {inp("title", "Book Title", "Enter the full book title")}
-          <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr" }}>{inp("author", "Author(s)", "Full name(s)")}{sel("publisher", "Publisher", PUBLISHERS)}</div>
-          <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr" }}>{sel("category", "Category", CATEGORIES)}{inp("edition", "Edition", "e.g. 4th Edition")}</div>
-          <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr" }}>{inp("pages", "Pages", "e.g. 1312", { type: "number" })}{sel("language", "Language", LANGUAGES)}</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{inp("author", "Author(s)", "Full name(s)")}{sel("publisher", "Publisher", PUBLISHERS)}</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{sel("category", "Category", CATEGORIES)}{inp("edition", "Edition", "e.g. 4th Edition")}</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{inp("pages", "Pages", "e.g. 1312", { type: "number" })}{sel("language", "Language", LANGUAGES)}</div>
           {inp("shelfLocation", "Shelf Location", "e.g. CS-A1-001")}
           <Fld label="Description" modified={isMod("description")}><textarea value={form.description} onChange={e => set("description")(e.target.value)} rows={4} placeholder="Brief description…" className={iCls} style={{ ...iSty, resize: "vertical" }} /></Fld>
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100 flex-wrap">
             <button onClick={onBack} className="px-5 py-2 rounded-xl text-sm font-semibold text-gray-600 border border-gray-200 bg-white hover:bg-gray-50">Cancel</button>
             <button onClick={handleSave} disabled={isPending}
               className="px-6 py-2 rounded-xl text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
@@ -364,14 +364,16 @@ function BookDetailsView({ book, onBack, onEdit }: { book: Book; onBack: () => v
   const b = detailedBook || book;
 
   return (
-    <div className="p-6">
-      <div className="flex items-center gap-3 mb-5">
-        <button onClick={onBack} className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 bg-white hover:bg-gray-50"><ArrowLeft size={15} className="text-gray-600" /></button>
-        <div className="flex-1">
-          <h1 className="font-extrabold text-xl text-gray-900">Book Details</h1>
-          <p className="text-xs text-gray-400">Library Catalog › Catalog › Book Details</p>
+    <div className="p-4 sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div className="flex items-center gap-3 min-w-0">
+          <button onClick={onBack} className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 bg-white hover:bg-gray-50 shrink-0"><ArrowLeft size={15} className="text-gray-600" /></button>
+          <div className="min-w-0">
+            <h1 className="font-extrabold text-xl text-gray-900 truncate">Book Details</h1>
+            <p className="text-xs text-gray-400 truncate">Library Catalog › Catalog › Book Details</p>
+          </div>
         </div>
-        <button onClick={() => onEdit(b)} className="flex items-center gap-1.5 text-sm font-semibold text-white px-4 py-2 rounded-xl hover:opacity-90"
+        <button onClick={() => onEdit(b)} className="flex items-center gap-1.5 text-sm font-semibold text-white px-4 py-2 rounded-xl hover:opacity-90 shrink-0"
           style={{ background: PUR, boxShadow: "0 4px 14px rgba(109,40,217,0.3)" }}><Pencil size={13} /> Edit Book</button>
       </div>
 
@@ -383,53 +385,51 @@ function BookDetailsView({ book, onBack, onEdit }: { book: Book; onBack: () => v
           </div>
         </div>
       ) : (
-        <div className="flex gap-5 items-start">
-          <div className="flex-1 flex flex-col gap-4">
-            <div className="rounded-2xl p-5 flex gap-5" style={{ background: "#fff", boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
-              <BookCover color={b.coverColor} title={b.title} size="lg" />
-              <div className="flex flex-col justify-center flex-1 min-w-0">
-                <div className="flex items-start gap-2 mb-1">
-                  <h2 className="font-extrabold text-lg text-gray-900 leading-tight flex-1">{b.title}</h2>
-                  <BookStatusBadge status={b.status} />
-                </div>
-                <p className="text-sm text-gray-500 mb-3">{b.author}</p>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <CatBadge label={b.category} />
-                  <span style={{ fontSize: 11, background: "#F3F4F6", color: "#6B7280", padding: "2px 8px", borderRadius: 12, fontWeight: 600 }}>{b.edition}</span>
-                </div>
-                <div className="grid gap-3" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
-                  {[
-                    { icon: <Hash size={13} />, label: "ISBN", value: b.isbn, mono: true },
-                    { icon: <MapPin size={13} />, label: "Shelf", value: b.shelfLocation },
-                    { icon: <BookOpen size={13} />, label: "Pages", value: String(b.pages) },
-                    { icon: <Building2 size={13} />, label: "Publisher", value: b.publisher },
-                    { icon: <Calendar size={13} />, label: "Year", value: String(b.year) },
-                    { icon: <BookMarked size={13} />, label: "Borrows", value: String(b.borrowCount) },
-                  ].map(s => (
-                    <div key={s.label} className="flex flex-col gap-0.5">
-                      <div className="flex items-center gap-1 text-gray-400">{s.icon}<span style={{ fontSize: 11, fontWeight: 600 }}>{s.label}</span></div>
-                      <p style={{ fontSize: 12, fontWeight: 600, color: "#374151", fontFamily: s.mono ? "monospace" : undefined }}>{s.value}</p>
-                    </div>
-                  ))}
-                </div>
+        <div className="flex flex-col gap-4">
+          <div className="rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row gap-5 items-center sm:items-start" style={{ background: "#fff", boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
+            <BookCover color={b.coverColor} title={b.title} size="lg" />
+            <div className="flex flex-col justify-center flex-1 min-w-0 w-full">
+              <div className="flex flex-wrap items-start justify-between gap-2 mb-1">
+                <h2 className="font-extrabold text-lg text-gray-900 leading-tight flex-1 min-w-0">{b.title}</h2>
+                <BookStatusBadge status={b.status} />
+              </div>
+              <p className="text-sm text-gray-500 mb-3">{b.author}</p>
+              <div className="flex flex-wrap gap-2 mb-4">
+                <CatBadge label={b.category} />
+                <span style={{ fontSize: 11, background: "#F3F4F6", color: "#6B7280", padding: "2px 8px", borderRadius: 12, fontWeight: 600 }}>{b.edition}</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {[
+                  { icon: <Hash size={13} />, label: "ISBN", value: b.isbn, mono: true },
+                  { icon: <MapPin size={13} />, label: "Shelf", value: b.shelfLocation },
+                  { icon: <BookOpen size={13} />, label: "Pages", value: String(b.pages) },
+                  { icon: <Building2 size={13} />, label: "Publisher", value: b.publisher },
+                  { icon: <Calendar size={13} />, label: "Year", value: String(b.year) },
+                  { icon: <BookMarked size={13} />, label: "Borrows", value: String(b.borrowCount) },
+                ].map(s => (
+                  <div key={s.label} className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-1 text-gray-400">{s.icon}<span style={{ fontSize: 11, fontWeight: 600 }}>{s.label}</span></div>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: "#374151", fontFamily: s.mono ? "monospace" : undefined }}>{s.value}</p>
+                  </div>
+                ))}
               </div>
             </div>
-            <div className="rounded-2xl p-5" style={{ background: "#fff", boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.06em", marginBottom: 10 }}>DESCRIPTION</p>
-              <p className="text-sm leading-relaxed text-gray-600">{b.description}</p>
-            </div>
-            <div className="rounded-2xl p-5 grid gap-4" style={{ background: "#fff", boxShadow: "0 2px 12px rgba(0,0,0,0.07)", gridTemplateColumns: "1fr 1fr 1fr" }}>
-              {[
-                { label: "Total Copies", v: b.totalCopies, c: PUR },
-                { label: "Available", v: b.availableCopies, c: "#059669" },
-                { label: "On Loan", v: b.totalCopies - b.availableCopies, c: "#D97706" },
-              ].map(s => (
-                <div key={s.label} className="flex flex-col items-center gap-1 py-2">
-                  <p className="text-2xl font-extrabold" style={{ color: s.c }}>{s.v}</p>
-                  <p className="text-xs font-semibold text-gray-500">{s.label}</p>
-                </div>
-              ))}
-            </div>
+          </div>
+          <div className="rounded-2xl p-4 sm:p-5" style={{ background: "#fff", boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.06em", marginBottom: 10 }}>DESCRIPTION</p>
+            <p className="text-sm leading-relaxed text-gray-600">{b.description}</p>
+          </div>
+          <div className="rounded-2xl p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-3 gap-4" style={{ background: "#fff", boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
+            {[
+              { label: "Total Copies", v: b.totalCopies, c: PUR },
+              { label: "Available", v: b.availableCopies, c: "#059669" },
+              { label: "On Loan", v: b.totalCopies - b.availableCopies, c: "#D97706" },
+            ].map(s => (
+              <div key={s.label} className="flex flex-col items-center gap-1 py-2">
+                <p className="text-2xl font-extrabold" style={{ color: s.c }}>{s.v}</p>
+                <p className="text-xs font-semibold text-gray-500">{s.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -451,7 +451,7 @@ export default function BookCatalogPage({
 
   if (!canAccess) {
     return (
-      <div className="p-6 flex items-center justify-center h-full">
+      <div className="p-4 sm:p-6 flex items-center justify-center h-full">
         <div className="text-center">
           <p className="text-4xl mb-2">🔒</p>
           <h2 className="font-bold text-xl text-gray-900 mb-1">Access Restricted</h2>

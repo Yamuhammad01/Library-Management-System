@@ -69,11 +69,11 @@ export default function AuthGuard({ children, onLogout }: AuthGuardProps) {
   if (authState.status === "loading") {
     return (
       <div
+        className="app-shell"
         style={{
           fontFamily: "'Inter', sans-serif",
           background: "#EBEDF2",
-          width: "100vw",
-          height: "100vh",
+          width: "100%",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -105,7 +105,7 @@ export default function AuthGuard({ children, onLogout }: AuthGuardProps) {
     return (
       <Suspense
         fallback={
-          <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+          <div className="app-shell w-full flex items-center justify-center text-gray-400 text-sm">
             Loading...
           </div>
         }

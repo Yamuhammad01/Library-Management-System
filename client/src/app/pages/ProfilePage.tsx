@@ -161,11 +161,11 @@ export default function ProfilePage() {
   // ── Loading state ──
   if (isLoading) {
     return (
-      <div className="p-6 flex flex-col gap-5">
+      <div className="p-4 sm:p-6 flex flex-col gap-5">
         <div className="flex items-center gap-3 mb-2">
           <div className="h-8 w-48 rounded bg-gray-200 animate-pulse" />
         </div>
-        <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr" }}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="rounded-xl p-5" style={{ background: "#fff", boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
             <div className="flex flex-col gap-4">
               {[1, 2, 3, 4, 5].map((i) => (
@@ -188,7 +188,7 @@ export default function ProfilePage() {
   // ── Error state ──
   if (isError) {
     return (
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="rounded-xl p-6 flex flex-col items-center gap-3" style={{ background: "#fff", boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
           <AlertCircle size={32} className="text-red-400" />
           <p className="text-sm text-red-500">Failed to load profile.</p>
@@ -205,16 +205,16 @@ export default function ProfilePage() {
   const initials = user.fullName?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "?";
 
   return (
-    <div className="p-6 flex flex-col gap-5">
+    <div className="p-4 sm:p-6 flex flex-col gap-5">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="font-extrabold text-xl text-gray-900">My Profile</h1>
           <p className="text-xs text-gray-400 mt-0.5">Profile › Manage your account</p>
         </div>
         <button
           onClick={() => refetch()}
-          className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700"
+          className="flex items-center justify-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 shrink-0 self-start"
         >
           <RefreshCw size={14} /> Refresh
         </button>
@@ -234,7 +234,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-      <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr" }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* ─── LEFT: Profile Info ─── */}
         <div className="rounded-xl p-5 flex flex-col gap-5" style={{ background: "#fff", boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
           {/* Avatar + basic info */}

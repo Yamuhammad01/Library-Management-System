@@ -179,3 +179,77 @@
     line-height: 1.5;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   RESPONSIVE / MOBILE FOUNDATION
+   Shared, reusable helpers so individual pages don't need to
+   invent their own media queries.
+   ───────────────────────────────────────────────────────────── */
+
+/* App shell height.
+   `dvh` follows the *visible* viewport so the layout is never
+   clipped behind mobile browser chrome (address bar / toolbars).
+   `vh` stays first as a fallback for older browsers. */
+.app-shell {
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* Full-screen page that is allowed to grow taller than the viewport
+   (login / register). Same dvh reasoning as above. */
+.app-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Contained horizontal scrolling for wide data tables.
+   The table gets its own scroll area — the page never scrolls
+   sideways. `overscroll-behavior-x: contain` stops a swipe at the
+   end of the table from triggering browser back-navigation. */
+.table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+.table-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+.table-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.table-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.16);
+  border-radius: 9999px;
+}
+.table-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.28);
+}
+
+/* Scrollable tab strips: swipeable on touch, no visible scrollbar
+   so the row still reads as a single line of tabs. */
+.tab-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.tab-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Form controls must be >= 16px on phones: iOS Safari zooms the whole
+   page when a smaller field is focused, which breaks the layout and
+   leaves the user stuck at an unexpected zoom level.
+   Scoped to small screens only — desktop sizing is untouched. */
+@media (max-width: 640px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+

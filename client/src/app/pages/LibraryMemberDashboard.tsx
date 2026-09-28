@@ -32,13 +32,13 @@ function StatCard({
 }) {
   return (
     <div
-      className="rounded-xl p-4 flex flex-col justify-between"
-      style={{ background: "#fff", boxShadow: "0 1px 6px rgba(0,0,0,0.06)", minHeight: 130 }}
+      className="rounded-xl p-3.5 sm:p-4 min-w-0 flex flex-col justify-between gap-3 min-h-[108px] sm:min-h-[130px]"
+      style={{ background: "#fff", boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}
     >
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-2">
         <p className="text-xs font-medium text-gray-500">{label}</p>
         <div
-          className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+          className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shrink-0"
           style={{ background: bg, color }}
         >
           {icon}
@@ -262,17 +262,17 @@ export default function LibraryMemberDashboard({ onGoToReservations }: { onGoToR
   const recentlyBorrowed = data?.recentlyBorrowed || [];
 
   return (
-    <div className="p-6 flex flex-col gap-5">
+    <div className="p-4 sm:p-6 flex flex-col gap-5">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="font-extrabold text-xl text-gray-900">My Library Dashboard</h1>
           <p className="text-xs text-gray-400 mt-0.5">Dashboard › My Activity</p>
         </div>
         <button
           onClick={() => refetch()}
           disabled={isLoading}
-          className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 disabled:opacity-50"
+          className="flex items-center justify-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 disabled:opacity-50 shrink-0 self-start"
         >
           <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
           Refresh
@@ -280,7 +280,7 @@ export default function LibraryMemberDashboard({ onGoToReservations }: { onGoToR
       </div>
 
       {/* Stat Cards */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
           label="Currently Borrowed"
           value={currentlyBorrowed.length}
@@ -320,7 +320,7 @@ export default function LibraryMemberDashboard({ onGoToReservations }: { onGoToR
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr" }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Books Currently Borrowed */}
         <SectionCard
           title="Books Currently Borrowed"

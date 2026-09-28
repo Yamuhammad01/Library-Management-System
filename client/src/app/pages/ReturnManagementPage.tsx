@@ -139,7 +139,7 @@ export default function ReturnManagementPage({ userRole }: { userRole: string })
   // Role check
   if (userRole !== "Librarian") {
     return (
-      <div className="p-6 text-center">
+      <div className="p-4 sm:p-6 text-center">
         <h1 className="text-xl font-bold text-red-600">Access Denied</h1>
         <p className="text-sm text-gray-500 mt-2">Only Librarians are authorized to access this page.</p>
       </div>
@@ -147,12 +147,12 @@ export default function ReturnManagementPage({ userRole }: { userRole: string })
   }
 
   return (
-    <div className="p-6 flex flex-col gap-5">
+    <div className="p-4 sm:p-6 flex flex-col gap-5">
       {/* Toast */}
       {toast && (
         <div
-          className="fixed top-5 right-5 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-xl"
-          style={{ background: "#1F2937", color: "#fff", fontSize: 13, fontWeight: 500, minWidth: 280 }}
+          className="fixed top-4 left-4 right-4 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-xl sm:top-5 sm:left-auto sm:right-5 sm:min-w-[280px]"
+          style={{ background: "#1F2937", color: "#fff", fontSize: 13, fontWeight: 500 }}
         >
           <CheckCircle2 size={15} style={{ color: "#10B981", flexShrink: 0 }} />
           {toast}
@@ -160,12 +160,12 @@ export default function ReturnManagementPage({ userRole }: { userRole: string })
       )}
 
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="font-extrabold text-xl text-gray-900">Return Books</h1>
           <p className="text-xs text-gray-400 mt-0.5">Library Catalog › Borrowing › Return Books</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button className="flex items-center gap-1.5 text-sm font-semibold text-gray-600 px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50">
             <ClipboardList size={14} /> View History
           </button>
@@ -173,7 +173,7 @@ export default function ReturnManagementPage({ userRole }: { userRole: string })
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(3,1fr)" }}>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {STATS.map((s) => (
           <div
             key={s.label}
@@ -197,31 +197,31 @@ export default function ReturnManagementPage({ userRole }: { userRole: string })
       </div>
 
       {/* Two-panel layout */}
-      <div className="flex gap-5 items-start">
+      <div className="flex flex-col xl:flex-row gap-5 items-start">
         {/* LEFT: Active loans list */}
-        <div className="flex-1 min-w-0 flex flex-col gap-4">
+        <div className="w-full flex-1 min-w-0 flex flex-col gap-4">
           <div
             className="rounded-2xl flex flex-col"
             style={{ background: "#fff", boxShadow: "0 2px 12px rgba(0,0,0,0.07)", border: "1px solid rgba(0,0,0,0.05)" }}
           >
-            <div className="flex items-center justify-between px-5 pt-5 pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-5 pt-5 pb-3">
               <div>
                 <p className="text-sm font-bold text-gray-900">Active Loans</p>
                 <p className="text-xs text-gray-400">Select a loan to process return</p>
               </div>
-              <div className="relative">
+              <div className="relative w-full sm:w-[260px]">
                 <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search member, book, ISBN…"
-                  className="text-sm outline-none rounded-xl border border-gray-200 bg-gray-50 focus:border-purple-600"
-                  style={{ padding: "8px 12px 8px 30px", width: 260 }}
+                  className="w-full text-sm outline-none rounded-xl border border-gray-200 bg-gray-50 focus:border-purple-600"
+                  style={{ padding: "8px 12px 8px 30px" }}
                 />
               </div>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="table-scroll">
               <table className="w-full text-sm" style={{ borderCollapse: "collapse", minWidth: 700 }}>
                 <thead>
                   <tr style={{ background: "#FAFAFA", borderBottom: "1px solid #F3F4F6" }}>
@@ -351,7 +351,7 @@ export default function ReturnManagementPage({ userRole }: { userRole: string })
                 {recent.length}
               </span>
             </div>
-            <div className="overflow-x-auto">
+            <div className="table-scroll">
               <table className="w-full text-sm" style={{ borderCollapse: "collapse", minWidth: 600 }}>
                 <thead>
                   <tr style={{ background: "#FAFAFA", borderBottom: "1px solid #F3F4F6" }}>
@@ -415,9 +415,9 @@ export default function ReturnManagementPage({ userRole }: { userRole: string })
         </div>
 
         {/* RIGHT: Return processor */}
-        <div className="flex flex-col gap-4 shrink-0" style={{ width: 340 }}>
+        <div className="flex flex-col gap-4 w-full xl:w-[340px] shrink-0">
           <div
-            className="rounded-2xl p-5 flex flex-col gap-4"
+            className="rounded-2xl p-4 sm:p-5 flex flex-col gap-4"
             style={{ background: "#fff", boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}
           >
             <div className="flex items-center gap-2">

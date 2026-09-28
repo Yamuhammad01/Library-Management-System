@@ -105,8 +105,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   return (
     <div className="space-y-3">
       {/* Current Avatar or Preview */}
-      <div className="flex items-center gap-4">
-        <div className="relative">
+      <div className="flex items-center gap-3 sm:gap-4">
+        <div className="relative shrink-0">
           <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-emerald-100 shadow-sm bg-gray-50 flex items-center justify-center">
             {preview ? (
               <img
@@ -191,7 +191,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
       {/* Action Buttons (show when preview exists) */}
       {preview && (
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <button
             onClick={handleCancelPreview}
             disabled={isUploading}

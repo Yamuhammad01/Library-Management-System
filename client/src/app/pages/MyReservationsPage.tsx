@@ -111,12 +111,12 @@ function ReservationRow({
   const canCancel = ["pending", "approved", "notified"].includes(record.status);
 
   return (
-    <div className="flex items-center gap-3 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
+    <div className="flex flex-wrap items-center gap-3 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
       {/* Cover */}
       <BookCover color={record.bookCoverColor} title={record.bookTitle} size="sm" />
 
       {/* Info */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-[140px]">
         <p className="text-sm font-semibold text-gray-900 leading-tight truncate">{record.bookTitle}</p>
         <p className="text-xs text-gray-400">Reserved {fmtDate(record.reservedAt)}</p>
         {record.expiresAt && (
@@ -212,11 +212,11 @@ export default function MyReservationsPage() {
   const activeFilterLabel = FILTER_OPTIONS.find(f => f.value === statusFilter)?.label || "";
 
   return (
-    <div className="p-6 flex flex-col gap-5">
+    <div className="p-4 sm:p-6 flex flex-col gap-5">
       {/* Toast */}
       {toast && (
-        <div className="fixed top-5 right-5 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-xl"
-          style={{ background: "#1F2937", color: "#fff", fontSize: 13, fontWeight: 500, minWidth: 300 }}>
+        <div className="fixed top-4 left-4 right-4 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-xl sm:top-5 sm:left-auto sm:right-5 sm:min-w-[300px]"
+          style={{ background: "#1F2937", color: "#fff", fontSize: 13, fontWeight: 500 }}>
           {toast.ok !== false
             ? <CheckCircle2 size={15} style={{ color: "#10B981", flexShrink: 0 }} />
             : <AlertTriangle size={15} style={{ color: "#F87171", flexShrink: 0 }} />
@@ -226,15 +226,15 @@ export default function MyReservationsPage() {
       )}
 
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="font-extrabold text-xl text-gray-900">My Reservations</h1>
           <p className="text-xs text-gray-400 mt-0.5">Catalog › My Reservations</p>
         </div>
         <button
           onClick={() => refetch()}
           disabled={isLoading}
-          className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 disabled:opacity-50"
+          className="flex items-center justify-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 disabled:opacity-50 shrink-0 self-start"
         >
           <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
           Refresh
@@ -242,7 +242,7 @@ export default function MyReservationsPage() {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard label="Total Reservations" value={stats.total} icon={<BookMarked size={18} />} bg="#EDE9FE" color={PUR} loading={isLoading} />
         <StatCard label="Pending" value={stats.pending} icon={<Clock size={18} />} bg="#FFF7ED" color="#D97706" loading={isLoading} />
         <StatCard label="Ready for Pickup" value={stats.ready} icon={<CheckCircle2 size={18} />} bg="#ECFDF5" color="#059669" loading={isLoading} />

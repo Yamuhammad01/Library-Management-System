@@ -48,91 +48,68 @@ export default function LoginPage({ onLogin, onGoToRegister }: LoginPageProps) {
 
   return (
     <div
+      className="app-screen flex items-center justify-center p-3 sm:p-6"
       style={{
-        minHeight: "100vh",
         background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
         fontFamily: "'Inter', sans-serif",
-        padding: 20,
       }}
     >
       <div
+        className="flex flex-col md:flex-row rounded-2xl sm:rounded-3xl overflow-hidden w-full max-w-4xl"
         style={{
-          display: "flex",
-          borderRadius: 24,
-          overflow: "hidden",
           boxShadow: "0 25px 60px rgba(0,0,0,0.3)",
-          maxWidth: 900,
-          width: "100%",
-          minHeight: 520,
         }}
       >
         {/* Left panel - branding */}
         <div
+          className="p-6 sm:p-8 md:p-12 flex flex-col justify-center text-white"
           style={{
-            flex: 1,
+            flex: "1 1 0%",
             background: `linear-gradient(145deg, ${PUR}, #4C1D95)`,
-            padding: "48px 40px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            color: "#fff",
           }}
         >
           <div
+            className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center mb-4 md:mb-6"
             style={{
-              width: 56,
-              height: 56,
-              borderRadius: 16,
               background: "rgba(255,255,255,0.15)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginBottom: 24,
             }}
           >
-            <BookOpen size={28} color="#fff" strokeWidth={2.5} />
+            <BookOpen size={26} color="#fff" strokeWidth={2.5} />
           </div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, margin: 0, lineHeight: 1.2 }}>
+          <h1 className="text-2xl md:text-3xl font-extrabold m-0 leading-tight">
             UniLib
           </h1>
-          <p style={{ fontSize: 14, opacity: 0.8, marginTop: 8, lineHeight: 1.6 }}>
+          <p className="text-xs sm:text-sm opacity-80 mt-2 leading-relaxed">
             University Library Management System. Access the complete library
             catalog, manage borrowings, and track resources.
           </p>
-          <div style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, opacity: 0.85 }}>
+          <div className="hidden md:flex flex-col gap-3 mt-8">
+            <div className="flex items-center gap-2.5 opacity-85">
               <CheckCircle2 size={16} />
-              <span style={{ fontSize: 13 }}>24,856+ books in catalog</span>
+              <span className="text-xs sm:text-sm">24,856+ books in catalog</span>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, opacity: 0.85 }}>
+            <div className="flex items-center gap-2.5 opacity-85">
               <CheckCircle2 size={16} />
-              <span style={{ fontSize: 13 }}>Real-time borrowing management</span>
+              <span className="text-xs sm:text-sm">Real-time borrowing management</span>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, opacity: 0.85 }}>
+            <div className="flex items-center gap-2.5 opacity-85">
               <CheckCircle2 size={16} />
-              <span style={{ fontSize: 13 }}>Multi-user role support</span>
+              <span className="text-xs sm:text-sm">Multi-user role support</span>
             </div>
           </div>
         </div>
 
         {/* Right panel - login form */}
         <div
+          className="bg-white p-6 sm:p-8 md:p-12 flex flex-col justify-center"
           style={{
-            flex: 1,
-            background: "#fff",
-            padding: "48px 40px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
+            flex: "1 1 0%",
           }}
         >
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111827", margin: 0 }}>
+          <h2 className="text-xl md:text-2xl font-extrabold text-gray-900 m-0">
             Welcome Back
           </h2>
-          <p style={{ fontSize: 13, color: "#6B7280", marginTop: 6, marginBottom: 28 }}>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1 mb-6">
             Sign in to your account to continue
           </p>
 
@@ -151,7 +128,7 @@ export default function LoginPage({ onLogin, onGoToRegister }: LoginPageProps) {
                   padding: "11px 14px",
                   borderRadius: 10,
                   border: `1.5px solid ${error ? "#DC2626" : "#E5E7EB"}`,
-                  fontSize: 14,
+                  fontSize: 16,
                   outline: "none",
                   transition: "border-color 0.2s",
                   background: "#F9FAFB",
@@ -178,7 +155,7 @@ export default function LoginPage({ onLogin, onGoToRegister }: LoginPageProps) {
                     padding: "11px 40px 11px 14px",
                     borderRadius: 10,
                     border: `1.5px solid ${error ? "#DC2626" : "#E5E7EB"}`,
-                    fontSize: 14,
+                    fontSize: 16,
                     outline: "none",
                     transition: "border-color 0.2s",
                     background: "#F9FAFB",

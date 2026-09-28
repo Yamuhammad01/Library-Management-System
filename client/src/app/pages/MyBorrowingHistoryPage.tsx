@@ -105,29 +105,29 @@ export default function MyBorrowingHistoryPage({ onBack }: { onBack: () => void 
   ];
 
   return (
-    <div className="p-6 flex flex-col gap-5">
+    <div className="p-4 sm:p-6 flex flex-col gap-5">
       {/* Toast */}
       {toast && (
-        <div className="fixed top-5 right-5 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-xl"
-          style={{ background: "#1F2937", color: "#fff", fontSize: 13, fontWeight: 500, minWidth: 280 }}>
+        <div className="fixed top-4 left-4 right-4 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-xl sm:top-5 sm:left-auto sm:right-5 sm:min-w-[280px]"
+          style={{ background: "#1F2937", color: "#fff", fontSize: 13, fontWeight: 500 }}>
           <CheckCircle2 size={15} style={{ color: "#10B981", flexShrink: 0 }} />{toast}
         </div>
       )}
 
       {/* Page header */}
-      <div className="flex items-start justify-between">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="font-extrabold text-xl text-gray-900">My Borrowing History</h1>
           <p className="text-xs text-gray-400 mt-0.5">My Account › Borrowing History</p>
         </div>
         <button onClick={onBack}
-          className="flex items-center gap-1.5 text-sm font-semibold text-gray-600 px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50">
+          className="flex items-center justify-center gap-1.5 text-sm font-semibold text-gray-600 px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 shrink-0 self-start">
           <ArrowLeft size={14} /> Back to Dashboard
         </button>
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(4,1fr)" }}>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div className="rounded-xl p-4 flex flex-col justify-between"
           style={{ background: "#fff", boxShadow: "0 1px 6px rgba(0,0,0,0.06)", minHeight: 100 }}>
           <p className="text-xs font-medium text-gray-500">Total Borrowed</p>
@@ -153,11 +153,11 @@ export default function MyBorrowingHistoryPage({ onBack }: { onBack: () => void 
       {/* Table card */}
       <div className="rounded-2xl flex flex-col" style={{ background: "#fff", boxShadow: "0 2px 12px rgba(0,0,0,0.07)", border: "1px solid rgba(0,0,0,0.05)" }}>
         {/* Filters + search */}
-        <div className="flex items-center justify-between px-4 pt-4 pb-0 border-b border-gray-100">
-          <div className="flex items-center gap-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 pt-4 pb-0 sm:pb-0 border-b border-gray-100">
+          <div className="tab-scroll flex items-center gap-0 -mx-4 px-4 sm:mx-0 sm:px-0">
             {statusFilters.map(f => (
               <button key={f.id} onClick={() => { setStatusFilter(f.id); setPg(1); }}
-                className="flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-colors relative"
+                className="flex items-center gap-2 px-3 sm:px-4 py-3 text-sm font-semibold transition-colors relative shrink-0"
                 style={{ color: statusFilter === f.id ? PUR : "#6B7280" }}>
                 {f.label}
                 <span className="text-xs font-bold px-2 py-0.5 rounded-full"
@@ -168,17 +168,16 @@ export default function MyBorrowingHistoryPage({ onBack }: { onBack: () => void 
               </button>
             ))}
           </div>
-          <div className="relative pb-2">
+          <div className="relative w-full sm:w-60 shrink-0 mb-3 sm:mb-0 pb-0 self-stretch sm:self-auto">
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input value={search} onChange={e => { setSearch(e.target.value); setPg(1); }}
               placeholder="Search by title or ISBN…"
-              className="text-sm outline-none rounded-xl border border-gray-200 bg-gray-50 focus:border-purple-600"
-              style={{ padding: "8px 12px 8px 30px", width: 240 }} />
+              className={iCls} style={{ ...iSty, paddingLeft: 30 }} />
           </div>
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
+        <div className="table-scroll">
           <table className="w-full text-sm" style={{ borderCollapse: "collapse", minWidth: 860 }}>
             <thead>
               <tr style={{ background: "#FAFAFA", borderBottom: "1px solid #F3F4F6" }}>

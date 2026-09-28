@@ -19,6 +19,7 @@ import {
   Globe, BookMarked, GraduationCap, Building2, User,
   MoreVertical, Check, RotateCcw, RefreshCw, ClipboardList,
   UserCheck, BookPlus, AlertTriangle, Clock, BadgeCheck, CalendarCheck,
+  Menu,
 } from "lucide-react";
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -30,6 +31,7 @@ import {
   useCategoryData,
 } from "./hooks/useDashboard";
 import { useBooks } from "./hooks/useBooks";
+import { useDialogA11y } from "./hooks/useDialogA11y";
 import { logoutUser } from "./services/api";
 import AuthGuard from "./components/AuthGuard";
 import {
@@ -104,7 +106,21 @@ function fmtDate(d: string) {
 }
 
 /* ──────────────────────── SIDEBAR ──────────────────────────── */
-function Sidebar({ view, onNav, user, onLogout }: { view:View; onNav:(v:View)=>void; user:{name:string;role:string}; onLogout:()=>void }) {
+function Sidebar({
+  view,
+  onNav,
+  user,
+  onLogout,
+  isOpen,
+  onClose,
+}: {
+  view: View;
+  onNav: (v: View) => void;
+  user: { name: string; role: string };
+  onLogout: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+}) {
   const [retOpen, setRetOpen] = useState(true);
 
   const active =
@@ -113,18 +129,23 @@ function Sidebar({ view, onNav, user, onLogout }: { view:View; onNav:(v:View)=>v
     (view === "returns" || view === "returnHistory") ? "returnManagement" :
     "borrowing";
 
+  const handleItemClick = (v: View) => {
+    onNav(v);
+    if (onClose) onClose();
+  };
+
   const navItem = (icon:React.ReactNode, label:string, isActive:boolean, onClick:()=>void) => (
     <button onClick={onClick}
-      className="flex items-center gap-2.5 py-2 w-full text-left rounded-lg transition-colors"
+      className="flex items-center gap-2.5 px-4 py-2.5 lg:py-2 w-full text-left rounded-lg transition-colors"
       style={{color:isActive?PUR:"#6B7280",fontWeight:isActive?600:500,fontSize:13,
-        background:isActive?"#F5F3FF":"transparent",padding:"8px 16px"}}>
+        background:isActive?"#F5F3FF":"transparent"}}>
       <span style={{color:isActive?PUR:"#9CA3AF"}}>{icon}</span>{label}
     </button>
   );
   const secHdr = (icon:React.ReactNode, label:string, open:boolean, toggle:()=>void) => (
     <button onClick={toggle}
-      className="flex items-center gap-2.5 py-2 w-full text-left hover:text-gray-700 transition-colors"
-      style={{color:"#374151",fontWeight:600,fontSize:13,padding:"8px 16px"}}>
+      className="flex items-center gap-2.5 px-4 py-2.5 lg:py-2 w-full text-left hover:text-gray-700 transition-colors"
+      style={{color:"#374151",fontWeight:600,fontSize:13}}>
       <span className="text-gray-400">{icon}</span>
       <span className="flex-1">{label}</span>
       <ChevronDown size={13} className="text-gray-400" style={{transform:open?"none":"rotate(-90deg)",transition:"transform .2s"}}/>
@@ -132,8 +153,8 @@ function Sidebar({ view, onNav, user, onLogout }: { view:View; onNav:(v:View)=>v
   );
   const subItem = (label:string, isActive:boolean, onClick:()=>void) => (
     <button onClick={onClick}
-      className="flex items-center gap-2.5 py-1.5 w-full text-left transition-colors"
-      style={{fontSize:12.5,color:isActive?PUR:"#6B7280",fontWeight:isActive?600:400,paddingLeft:36,paddingRight:16}}>
+      className="flex items-center gap-2.5 pl-9 pr-4 py-2 lg:py-1.5 w-full text-left transition-colors"
+      style={{fontSize:12.5,color:isActive?PUR:"#6B7280",fontWeight:isActive?600:400}}>
       <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{background:isActive?PUR:"#D1D5DB"}}/>
       {label}
     </button>
@@ -141,77 +162,123 @@ function Sidebar({ view, onNav, user, onLogout }: { view:View; onNav:(v:View)=>v
 
   const initials = user.name.split(" ").map(n=>n[0]).join("").slice(0,2).toUpperCase();
 
+  // Mobile drawer: lock background scroll + close on Escape.
+  // No effect on desktop, where the sidebar is static and always visible.
+  useDialogA11y(Boolean(isOpen), onClose);
+
   return (
-    <aside style={{width:210,background:"#fff",borderRight:"1px solid rgba(0,0,0,0.06)"}}
-      className="shrink-0 flex flex-col overflow-y-auto">
-      <div className="flex items-center gap-2.5 px-4 py-4 border-b border-gray-100">
-        <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold"
-          style={{background:PUR}}>{initials}</div>
-        <div>
-          <p className="text-sm font-semibold text-gray-900 leading-tight">{user.name}</p>
-          <p className="text-xs text-gray-400">{user.role}</p>
+    <>
+      {/* Mobile backdrop */}
+      {isOpen && (
+        <div
+          onClick={onClose}
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden backdrop-blur-xs transition-opacity"
+          aria-hidden="true"
+        />
+      )}
+      <aside
+        aria-label="Main navigation"
+        style={{ background: "#fff", borderRight: "1px solid rgba(0,0,0,0.06)" }}
+        className={`fixed inset-y-0 left-0 z-50 w-[85vw] max-w-[280px] lg:w-[210px] shrink-0 flex flex-col overflow-y-auto transition-[transform,visibility] duration-200 ease-in-out lg:static lg:translate-x-0 lg:visible ${
+          isOpen ? "translate-x-0 visible shadow-2xl lg:shadow-none" : "-translate-x-full invisible lg:translate-x-0"
+        }`}
+      >
+        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+              style={{ background: PUR }}
+            >
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900 leading-tight truncate">{user.name}</p>
+              <p className="text-xs text-gray-400 truncate">{user.role}</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="lg:hidden p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+            title="Close navigation menu"
+            aria-label="Close navigation menu"
+          >
+            <X size={18} />
+          </button>
         </div>
-      </div>
-      <nav className="flex flex-col py-3 gap-0.5 px-2">
-        {navItem(<LayoutDashboard size={15}/>, "Dashboard", active==="dashboard", ()=>onNav("dashboard"))}
-        {(user.role === "Librarian" || user.role === "Admin") && (
-          <>{navItem(<BookOpen size={15}/>, "Catalog", active==="books", ()=>onNav("books"))}</>
-        )}
-        {(user.role === "Librarian" || user.role === "Admin") && (
-          <>{navItem(<ArrowLeftRight size={15}/>, "Borrowing", view==="borrowing" || view==="issue", ()=>onNav("borrowing"))}</>
-        )}
-        {user.role === "LibraryMember" && (
-          <>
-            {navItem(<BookOpen size={15}/>, "Catalog", view==="catalog", ()=>onNav("catalog"))}
-            {navItem(<ArrowLeftRight size={15}/>, "Borrowing History", view==="myBorrowingHistory", ()=>onNav("myBorrowingHistory"))}
-            {navItem(<BookMarked size={15}/>, "Reservations", view==="myReservations", ()=>onNav("myReservations"))}
-          </>
-        )}
-        {/* Return Management Section - separate top-level section */}
-        {(user.role === "Librarian" || user.role === "Admin") && (
-          <>
-            {secHdr(<RotateCcw size={15}/>, "Return Management", retOpen, ()=>setRetOpen(!retOpen))}
-            {retOpen && <>
-              {subItem("Return Books",   view==="returns",       ()=>onNav("returns"))}
-              {subItem("Return History", view==="returnHistory", ()=>onNav("returnHistory"))}
-            </>}
-          </>
-        )}
-        {(user.role === "Librarian" || user.role === "Admin") && (
-          <>{navItem(<BookMarked size={15}/>, "Reservations", view==="reservations", ()=>onNav("reservations"))}</>
-        )}
-        {navItem(<User size={15}/>, "Profile", view==="profile", ()=>onNav("profile"))}
-        <button onClick={onLogout} className="flex items-center gap-2.5 py-2 w-full text-left rounded-lg transition-colors"
-          style={{color:"#EF4444",fontSize:13,fontWeight:500,padding:"8px 16px"}}>
-          <LogOut size={15} style={{color:"#EF4444"}}/>Logout
-          <ChevronRight size={13} className="ml-auto opacity-40"/>
-        </button>
-      </nav>
-    </aside>
+        <nav className="flex flex-col py-3 gap-0.5 px-2">
+          {navItem(<LayoutDashboard size={15}/>, "Dashboard", active==="dashboard", ()=>handleItemClick("dashboard"))}
+          {(user.role === "Librarian" || user.role === "Admin") && (
+            <>{navItem(<BookOpen size={15}/>, "Catalog", active==="books", ()=>handleItemClick("books"))}</>
+          )}
+          {(user.role === "Librarian" || user.role === "Admin") && (
+            <>{navItem(<ArrowLeftRight size={15}/>, "Borrowing", view==="borrowing" || view==="issue", ()=>handleItemClick("borrowing"))}</>
+          )}
+          {user.role === "LibraryMember" && (
+            <>
+              {navItem(<BookOpen size={15}/>, "Catalog", view==="catalog", ()=>handleItemClick("catalog"))}
+              {navItem(<ArrowLeftRight size={15}/>, "Borrowing History", view==="myBorrowingHistory", ()=>handleItemClick("myBorrowingHistory"))}
+              {navItem(<BookMarked size={15}/>, "Reservations", view==="myReservations", ()=>handleItemClick("myReservations"))}
+            </>
+          )}
+          {/* Return Management Section - separate top-level section */}
+          {(user.role === "Librarian" || user.role === "Admin") && (
+            <>
+              {secHdr(<RotateCcw size={15}/>, "Return Management", retOpen, ()=>setRetOpen(!retOpen))}
+              {retOpen && <>
+                {subItem("Return Books",   view==="returns",       ()=>handleItemClick("returns"))}
+                {subItem("Return History", view==="returnHistory", ()=>handleItemClick("returnHistory"))}
+              </>}
+            </>
+          )}
+          {(user.role === "Librarian" || user.role === "Admin") && (
+            <>{navItem(<BookMarked size={15}/>, "Reservations", view==="reservations", ()=>handleItemClick("reservations"))}</>
+          )}
+          {navItem(<User size={15}/>, "Profile", view==="profile", ()=>handleItemClick("profile"))}
+          <button onClick={() => { if (onClose) onClose(); onLogout(); }} className="flex items-center gap-2.5 px-4 py-2.5 lg:py-2 w-full text-left rounded-lg transition-colors"
+            style={{color:"#EF4444",fontSize:13,fontWeight:500}}>
+            <LogOut size={15} style={{color:"#EF4444"}}/>Logout
+            <ChevronRight size={13} className="ml-auto opacity-40"/>
+          </button>
+        </nav>
+      </aside>
+    </>
   );
 }
 /* ──────────────────────── HEADER ───────────────────────────── */
-function Header() {
+function Header({ onToggleMobileNav }: { onToggleMobileNav: () => void }) {
   return (
-    <header className="shrink-0 flex items-center justify-between px-6"
+    <header className="shrink-0 flex items-center justify-between gap-2 px-3 sm:px-6"
       style={{height:56,background:"#fff",borderBottom:"1px solid rgba(0,0,0,0.06)"}}>
-      <div className="flex items-center gap-2 w-52 shrink-0">
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{background:PUR}}>
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <button
+          onClick={onToggleMobileNav}
+          className="lg:hidden p-2 sm:p-1.5 -ml-1.5 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors shrink-0"
+          title="Toggle Navigation Menu"
+          aria-label="Toggle navigation menu"
+        >
+          <Menu size={20} />
+        </button>
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{background:PUR}}>
           <BookOpen size={14} color="#fff" strokeWidth={2.5}/>
         </div>
-        <span className="font-bold text-gray-900 text-base tracking-tight">UniLib</span>
+        <span className="font-bold text-gray-900 text-base tracking-tight truncate">UniLib</span>
       </div>
-      <div className="flex-1"/>
-      <div className="flex items-center gap-3">
-        <button className="text-gray-400"><Search size={18}/></button>
-        <button className="text-gray-400"><MessageSquare size={18}/></button>
-        <button className="relative text-gray-400">
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        <button className="text-gray-400 p-2 sm:p-1 hover:text-gray-600" aria-label="Search">
+          <Search size={18}/>
+        </button>
+        <button className="text-gray-400 p-2 sm:p-1 hover:text-gray-600 hidden sm:block" aria-label="Messages">
+          <MessageSquare size={18}/>
+        </button>
+        <button className="relative text-gray-400 p-2 sm:p-1 hover:text-gray-600" aria-label="Notifications, 4 unread">
           <Bell size={18}/>
-          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white flex items-center justify-center"
+          <span className="absolute top-0.5 right-0.5 sm:top-0 sm:right-0 w-4 h-4 rounded-full text-white flex items-center justify-center"
             style={{background:PUR,fontSize:9}}>4</span>
         </button>
-        <button className="text-gray-400"><LayoutGrid size={18}/></button>
-        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
+        <button className="text-gray-400 p-2 sm:p-1 hover:text-gray-600 hidden sm:block" aria-label="Apps">
+          <LayoutGrid size={18}/>
+        </button>
+        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
           style={{background:PUR}}>SB</div>
       </div>
     </header>
@@ -220,12 +287,26 @@ function Header() {
 
 /* ──────────────────────── SHELL ─────────────────────────────── */
 function Shell({ children, view, onNav, user, onLogout }: { children:React.ReactNode; view:View; onNav:(v:View)=>void; user:{name:string;role:string}; onLogout:()=>void }) {
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  const handleNav = (v: View) => {
+    onNav(v);
+    setMobileNavOpen(false);
+  };
+
   return (
-    <div style={{fontFamily:"'Inter',sans-serif",background:"#EBEDF2"}} className="w-full h-screen flex flex-col overflow-hidden">
-      <Header/>
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar view={view} onNav={onNav} user={user} onLogout={onLogout}/>
-        <main className="flex-1 overflow-y-auto">{children}</main>
+    <div style={{fontFamily:"'Inter',sans-serif",background:"#EBEDF2"}} className="app-shell w-full flex flex-col overflow-hidden">
+      <Header onToggleMobileNav={() => setMobileNavOpen(prev => !prev)} />
+      <div className="flex flex-1 overflow-hidden relative">
+        <Sidebar
+          view={view}
+          onNav={handleNav}
+          user={user}
+          onLogout={onLogout}
+          isOpen={mobileNavOpen}
+          onClose={() => setMobileNavOpen(false)}
+        />
+        <main className="flex-1 min-w-0 overflow-y-auto">{children}</main>
       </div>
     </div>
   );
@@ -300,12 +381,12 @@ function IssueBookPage({ onBack }: { onBack: () => void }) {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <div className="flex items-center gap-3 mb-5">
-        <button onClick={onBack} className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 bg-white hover:bg-gray-50"><ArrowLeft size={15} className="text-gray-600"/></button>
-        <div>
-          <h1 className="font-extrabold text-xl text-gray-900">Issue a Book</h1>
-          <p className="text-xs text-gray-400">Library Catalog › Borrowing › Issue a Book</p>
+        <button onClick={onBack} className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 bg-white hover:bg-gray-50 shrink-0"><ArrowLeft size={15} className="text-gray-600"/></button>
+        <div className="min-w-0">
+          <h1 className="font-extrabold text-xl text-gray-900 truncate">Issue a Book</h1>
+          <p className="text-xs text-gray-400 truncate">Library Catalog › Borrowing › Issue a Book</p>
         </div>
       </div>
 
@@ -315,17 +396,17 @@ function IssueBookPage({ onBack }: { onBack: () => void }) {
         </div>
       )}
 
-      <div className="flex gap-5 items-start">
+      <div className="flex flex-col lg:flex-row gap-5 items-start">
         {/* Left: selections */}
-        <div className="flex-1 flex flex-col gap-4">
+        <div className="w-full flex-1 flex flex-col gap-4 min-w-0">
           {/* Member selection */}
-          <div className="rounded-2xl p-5" style={{background:"#fff",boxShadow:"0 2px 12px rgba(0,0,0,0.07)"}}>
+          <div className="rounded-2xl p-4 sm:p-5" style={{background:"#fff",boxShadow:"0 2px 12px rgba(0,0,0,0.07)"}}>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{background:"#EDE9FE"}}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{background:"#EDE9FE"}}>
                 <UserCheck size={15} style={{color:PUR}}/>
               </div>
-              <div><p className="text-sm font-bold text-gray-900">Select Member</p><p className="text-xs text-gray-400">Search by name, ID, or department</p></div>
-              {member && <button onClick={()=>setMember(null)} className="ml-auto text-xs text-gray-400 hover:text-gray-700 flex items-center gap-1"><X size={11}/>Change</button>}
+              <div className="min-w-0"><p className="text-sm font-bold text-gray-900 truncate">Select Member</p><p className="text-xs text-gray-400 truncate">Search by name, ID, or department</p></div>
+              {member && <button onClick={()=>setMember(null)} className="ml-auto text-xs text-gray-400 hover:text-gray-700 flex items-center gap-1 shrink-0"><X size={11}/>Change</button>}
             </div>
 
             {!member ? (
@@ -347,11 +428,11 @@ function IssueBookPage({ onBack }: { onBack: () => void }) {
               <div className="rounded-xl p-3 flex items-center gap-3" style={{background:"#F5F3FF",border:`1.5px solid ${PUR}22`}}>
                 <Avatar name={member.name} size={40}/>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-gray-900">{member.name}</p>
-                  <p className="text-xs text-gray-500">{member.id} · {member.department}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{member.email}</p>
+                  <p className="text-sm font-bold text-gray-900 truncate">{member.name}</p>
+                  <p className="text-xs text-gray-500 truncate">{member.id} · {member.department}</p>
+                  <p className="text-xs text-gray-400 mt-0.5 truncate">{member.email}</p>
                 </div>
-                <div className="text-right">
+                <div className="text-right shrink-0">
                   <span style={{fontSize:10,fontWeight:700,background:member.type==="staff"?"#FFF7ED":"#EDE9FE",color:member.type==="staff"?"#D97706":PUR,padding:"2px 8px",borderRadius:10,display:"block",marginBottom:4}}>{member.type}</span>
                   <p className="text-xs text-gray-400">{member.activeLoans} active loans</p>
                 </div>
@@ -360,13 +441,13 @@ function IssueBookPage({ onBack }: { onBack: () => void }) {
           </div>
 
           {/* Book selection */}
-          <div className="rounded-2xl p-5" style={{background:"#fff",boxShadow:"0 2px 12px rgba(0,0,0,0.07)"}}>
+          <div className="rounded-2xl p-4 sm:p-5" style={{background:"#fff",boxShadow:"0 2px 12px rgba(0,0,0,0.07)"}}>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{background:"#ECFDF5"}}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{background:"#ECFDF5"}}>
                 <BookOpen size={15} style={{color:"#059669"}}/>
               </div>
-              <div><p className="text-sm font-bold text-gray-900">Select Book</p><p className="text-xs text-gray-400">Only showing books with available copies</p></div>
-              {book && <button onClick={()=>setBook(null)} className="ml-auto text-xs text-gray-400 hover:text-gray-700 flex items-center gap-1"><X size={11}/>Change</button>}
+              <div className="min-w-0"><p className="text-sm font-bold text-gray-900 truncate">Select Book</p><p className="text-xs text-gray-400 truncate">Only showing books with available copies</p></div>
+              {book && <button onClick={()=>setBook(null)} className="ml-auto text-xs text-gray-400 hover:text-gray-700 flex items-center gap-1 shrink-0"><X size={11}/>Change</button>}
             </div>
 
             {!book ? (
@@ -388,8 +469,8 @@ function IssueBookPage({ onBack }: { onBack: () => void }) {
               <div className="rounded-xl p-3 flex items-center gap-3" style={{background:"#F0FDF4",border:"1.5px solid #A7F3D0"}}>
                 <BookCover color={book.coverColor} title={book.title} size="sm"/>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-gray-900 leading-tight">{book.title}</p>
-                  <p className="text-xs text-gray-500">{book.author.split(",")[0]}</p>
+                  <p className="text-sm font-bold text-gray-900 leading-tight truncate">{book.title}</p>
+                  <p className="text-xs text-gray-500 truncate">{book.author.split(",")[0]}</p>
                   <p className="text-xs" style={{fontFamily:"monospace",color:"#9CA3AF"}}>{book.isbn}</p>
                 </div>
                 <div className="text-right shrink-0">
@@ -403,9 +484,9 @@ function IssueBookPage({ onBack }: { onBack: () => void }) {
         </div>
 
         {/* Right: Loan details */}
-        <div className="flex flex-col gap-4 shrink-0" style={{width:300}}>
+        <div className="flex flex-col gap-4 w-full lg:w-[320px] shrink-0">
           {/* Loan details card */}
-          <div className="rounded-2xl p-5 flex flex-col gap-4" style={{background:"#fff",boxShadow:"0 2px 12px rgba(0,0,0,0.07)"}}>
+          <div className="rounded-2xl p-4 sm:p-5 flex flex-col gap-4" style={{background:"#fff",boxShadow:"0 2px 12px rgba(0,0,0,0.07)"}}>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{background:"#FFF7ED"}}>
                 <Calendar size={15} style={{color:"#D97706"}}/>
@@ -490,10 +571,10 @@ function IssueBookPage({ onBack }: { onBack: () => void }) {
 /* ─────────────────── DASHBOARD OVERVIEW ────────────────────── */
 function StatCard({ label, value, icon, bg, color, loading, error }:{ label:string; value:string|number; icon:React.ReactNode; bg:string; color:string; loading?:boolean; error?:boolean }) {
   return (
-    <div className="rounded-xl p-4 flex flex-col justify-between" style={{background:"#fff",boxShadow:"0 1px 6px rgba(0,0,0,0.06)",minHeight:130}}>
-      <div className="flex items-start justify-between">
+    <div className="rounded-xl p-3.5 sm:p-4 min-w-0 flex flex-col justify-between min-h-[112px] sm:min-h-[130px]" style={{background:"#fff",boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
+      <div className="flex items-start justify-between gap-2">
         <p className="text-xs font-medium text-gray-500">{label}</p>
-        <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{background:bg,color}}>{icon}</div>
+        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shrink-0" style={{background:bg,color}}>{icon}</div>
       </div>
       <div>
         {loading ? (
@@ -521,54 +602,58 @@ function DashboardOverview({ onGoBooks, onGoBorrowing }:{ onGoBooks:()=>void; on
   ];
 
   return (
-    <div className="p-6 flex flex-col gap-5">
-      <div className="flex items-start justify-between">
+    <div className="p-4 sm:p-6 flex flex-col gap-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div><h1 className="font-extrabold text-xl text-gray-900">Library Dashboard</h1><p className="text-xs text-gray-400 mt-0.5">Dashboard › Overview</p></div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button onClick={onGoBorrowing} className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700"><ArrowLeftRight size={14}/> Borrowing</button>
           <button onClick={onGoBooks} className="flex items-center gap-1.5 text-sm font-semibold text-white px-4 py-2 rounded-xl hover:opacity-90" style={{background:PUR,boxShadow:"0 4px 14px rgba(109,40,217,0.3)"}}><BookOpen size={14}/> Manage Books</button>
         </div>
       </div>
-      <div className="grid gap-4" style={{gridTemplateColumns:"repeat(4,1fr)"}}>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {STATS_DEFS.map(s=>(
           <StatCard key={s.label} {...s} loading={statsLoading} error={statsError}/>
         ))}
       </div>
-      <div className="grid gap-4" style={{gridTemplateColumns:"1fr 320px"}}>
-        <div className="rounded-xl p-4" style={{background:"#fff",boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
+        <div className="rounded-xl p-4 min-w-0" style={{background:"#fff",boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
           <div className="flex items-center justify-between mb-3"><p className="text-sm font-semibold text-gray-800">Borrowing Activity</p><MoreVertical size={16} className="text-gray-400"/></div>
           {activityLoading ? (
             <div className="h-[200px] flex items-center justify-center text-gray-400 text-sm">Loading chart...</div>
           ) : (
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={activity || []} margin={{top:4,right:4,left:-28,bottom:0}}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6"/>
-                <XAxis dataKey="m" tick={{fontSize:10,fill:"#9CA3AF"}} axisLine={false} tickLine={false}/>
-                <YAxis tick={{fontSize:10,fill:"#9CA3AF"}} axisLine={false} tickLine={false}/>
-                <Tooltip/>
-                <Line type="monotone" dataKey="b" name="Borrowed" stroke={PUR} strokeWidth={2.5} dot={false}/>
-                <Line type="monotone" dataKey="r" name="Returned" stroke="#D1D5DB" strokeWidth={2} dot={false}/>
-              </LineChart>
-            </ResponsiveContainer>
+            <div className="w-full h-[200px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={activity || []} margin={{top:4,right:4,left:-28,bottom:0}}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6"/>
+                  <XAxis dataKey="m" tick={{fontSize:10,fill:"#9CA3AF"}} axisLine={false} tickLine={false}/>
+                  <YAxis tick={{fontSize:10,fill:"#9CA3AF"}} axisLine={false} tickLine={false}/>
+                  <Tooltip/>
+                  <Line type="monotone" dataKey="b" name="Borrowed" stroke={PUR} strokeWidth={2.5} dot={false}/>
+                  <Line type="monotone" dataKey="r" name="Returned" stroke="#D1D5DB" strokeWidth={2} dot={false}/>
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           )}
           {activity && activity.length === 0 && !activityLoading && (
             <p className="text-center text-gray-400 text-sm py-8">No borrowing activity data yet.</p>
           )}
         </div>
-        <div className="rounded-xl p-4" style={{background:"#fff",boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
+        <div className="rounded-xl p-4 min-w-0" style={{background:"#fff",boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
           <p className="text-sm font-semibold text-gray-800 mb-3">By Category</p>
           {catLoading ? (
             <div className="h-[200px] flex items-center justify-center text-gray-400 text-sm">Loading chart...</div>
           ) : (
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={categories || []} margin={{top:4,right:4,left:-28,bottom:0}} barCategoryGap="30%">
-                <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false}/>
-                <XAxis dataKey="n" tick={{fontSize:10,fill:"#9CA3AF"}} axisLine={false} tickLine={false}/>
-                <YAxis tick={{fontSize:10,fill:"#9CA3AF"}} axisLine={false} tickLine={false}/>
-                <Tooltip/>
-                <Bar dataKey="v" name="Borrowed" fill={PUR} radius={[4,4,0,0]}/>
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="w-full h-[200px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={categories || []} margin={{top:4,right:4,left:-28,bottom:0}} barCategoryGap="30%">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false}/>
+                  <XAxis dataKey="n" tick={{fontSize:10,fill:"#9CA3AF"}} axisLine={false} tickLine={false}/>
+                  <YAxis tick={{fontSize:10,fill:"#9CA3AF"}} axisLine={false} tickLine={false}/>
+                  <Tooltip/>
+                  <Bar dataKey="v" name="Borrowed" fill={PUR} radius={[4,4,0,0]}/>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           )}
           {categories && categories.length === 0 && !catLoading && (
             <p className="text-center text-gray-400 text-sm py-8">No category data yet.</p>

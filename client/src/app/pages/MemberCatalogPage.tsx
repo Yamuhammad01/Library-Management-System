@@ -113,7 +113,7 @@ function BookCard({ book, onBorrowSuccess }: { book: Book; onBorrowSuccess?: () 
 
         {/* Availability + Action */}
         <div className="flex flex-col gap-2 pt-2 border-t border-gray-50 mt-1">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <span className="text-xs text-gray-500">Available: </span>
               <span className="text-sm font-bold" style={{ color: isAvailable ? "#059669" : "#DC2626" }}>
@@ -225,23 +225,23 @@ export default function MemberCatalogPage() {
   const hasActiveFilters = search || category || status || author || publisher;
 
   return (
-    <div className="p-6 flex flex-col gap-5">
+    <div className="p-4 sm:p-6 flex flex-col gap-5">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="font-extrabold text-xl text-gray-900">Book Catalog</h1>
           <p className="text-xs text-gray-400 mt-0.5">Catalog › Browse available books</p>
         </div>
         <button
           onClick={() => refetch()}
-          className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700"
+          className="flex items-center justify-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 shrink-0 self-start"
         >
           <RefreshCw size={14} /> Refresh
         </button>
       </div>
 
       {/* Search Bar */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
         <div className="relative flex-1">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -263,14 +263,14 @@ export default function MemberCatalogPage() {
         </div>
         <button
           onClick={handleSearch}
-          className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2.5 rounded-xl text-white hover:opacity-90"
+          className="flex items-center justify-center gap-1.5 text-sm font-semibold px-4 py-2.5 rounded-xl text-white hover:opacity-90"
           style={{ background: PUR }}
         >
           <Search size={14} /> Search
         </button>
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700"
+          className="flex items-center justify-center gap-1.5 text-sm font-semibold px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700"
         >
           <Filter size={14} /> Filters
           {hasActiveFilters && (
@@ -290,7 +290,7 @@ export default function MemberCatalogPage() {
               </button>
             )}
           </div>
-          <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
             {/* Category */}
             <div className="flex flex-col gap-1">
               <label style={{ fontSize: 11, fontWeight: 600, color: "#374151" }}>Category</label>
@@ -341,7 +341,7 @@ export default function MemberCatalogPage() {
           </div>
 
           {/* Sort */}
-          <div className="flex items-center gap-2 pt-2 border-t border-gray-50">
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-50">
             <ArrowUpDown size={13} className="text-gray-400" />
             <span style={{ fontSize: 11, fontWeight: 600, color: "#374151" }}>Sort by:</span>
             <div className="flex gap-1.5 flex-wrap">
@@ -377,7 +377,7 @@ export default function MemberCatalogPage() {
 
       {/* Loading */}
       {isLoading && (
-        <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
+        <div className="grid grid-cols-1 min-[400px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
             <div key={i} className="rounded-xl overflow-hidden" style={{ background: "#fff" }}>
               <div className="h-40 bg-gray-100 animate-pulse" />
@@ -417,7 +417,7 @@ export default function MemberCatalogPage() {
 
       {/* Book Grid */}
       {!isLoading && !isError && books.length > 0 && (
-        <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
+        <div className="grid grid-cols-1 min-[400px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {books.map((book: Book) => (
             <BookCard key={book._id} book={book} onBorrowSuccess={refetch} />
           ))}

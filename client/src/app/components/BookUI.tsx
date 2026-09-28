@@ -121,13 +121,13 @@ export function Fld({ label, children, modified }: { label:string; children:Reac
   );
 }
 
-export const iCls = "w-full text-sm outline-none rounded-lg border border-gray-200 bg-gray-50 focus:border-purple-600 transition-colors";
+export const iCls = "w-full min-w-0 text-sm outline-none rounded-lg border border-gray-200 bg-gray-50 focus:border-purple-600 transition-colors";
 export const iSty: React.CSSProperties = {padding:"9px 12px",color:"#111827"};
 
 export function IconBtn({ children, color, title, onClick }: { children:React.ReactNode; color:string; title:string; onClick?:()=>void }) {
   return (
-    <button title={title} onClick={onClick}
-      className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:scale-105"
+    <button title={title} aria-label={title} onClick={onClick}
+      className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-all hover:scale-105 shrink-0"
       style={{background:`${color}18`,color}}>{children}</button>
   );
 }
@@ -135,7 +135,7 @@ export function IconBtn({ children, color, title, onClick }: { children:React.Re
 export function PageBtn({ children, active, disabled, onClick }: { children:React.ReactNode; active?:boolean; disabled?:boolean; onClick?:()=>void }) {
   return (
     <button onClick={onClick} disabled={disabled}
-      className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors"
+      className="min-w-9 h-9 sm:min-w-[32px] sm:h-8 px-1.5 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors shrink-0"
       style={{background:active?PUR:disabled?"transparent":"#F9FAFB",color:active?"#fff":disabled?"#D1D5DB":"#374151",cursor:disabled?"not-allowed":"pointer"}}>
       {children}
     </button>

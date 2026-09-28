@@ -18,6 +18,7 @@ import {
 import {
   Avatar, BorrowBadge, IconBtn, PageBtn, PUR,
 } from "../components/BookUI";
+import { useDialogA11y } from "../hooks/useDialogA11y";
 
 /* ─────────────────────────── TYPES ─────────────────────────── */
 type ReservationStatus =
@@ -117,19 +118,24 @@ function RejectModal({ record, onConfirm, onClose }: {
   onClose: () => void;
 }) {
   const [reason, setReason] = useState("");
+  useDialogA11y(true, onClose);
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }}>
-      <div className="rounded-2xl p-6 w-full max-w-md" style={{ background: "#fff", boxShadow: "0 20px 60px rgba(0,0,0,0.25)" }}>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "#FEF2F2" }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto" style={{ background: "rgba(0,0,0,0.45)" }}
+      role="dialog" aria-modal="true" aria-label="Reject reservation">
+      <div className="rounded-2xl p-5 sm:p-6 w-full max-w-md max-h-[85vh] overflow-y-auto my-auto" style={{ background: "#fff", boxShadow: "0 20px 60px rgba(0,0,0,0.25)" }}>
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#FEF2F2" }}>
             <XCircle size={20} style={{ color: "#DC2626" }} />
           </div>
-          <div>
+          <div className="min-w-0 flex-1">
             <p className="font-bold text-gray-900">Reject Reservation</p>
-            <p className="text-xs text-gray-400 truncate" style={{ maxWidth: 280 }}>
+            <p className="text-xs text-gray-400 break-words">
               {record.memberName} — {record.bookTitle}
             </p>
           </div>
+          <button onClick={onClose} aria-label="Close dialog" className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 shrink-0">
+            <X size={15} className="text-gray-500" />
+          </button>
         </div>
         <div className="flex flex-col gap-1.5 mb-5">
           <label className="text-xs font-semibold text-gray-700">Reason <span className="text-gray-400 font-normal">(optional)</span></label>
@@ -175,20 +181,23 @@ function DetailDrawer({ record, onClose }: { record: Reservation; onClose: () =>
   ];
   if (record.rejectionReason) fields.push(["Rejection Reason", record.rejectionReason]);
 
+  useDialogA11y(true, onClose);
+
   return (
     <div className="fixed inset-0 z-50 flex" style={{ background: "rgba(0,0,0,0.4)" }} onClick={onClose}>
-      <div className="ml-auto h-full overflow-y-auto flex flex-col" style={{ width: 420, background: "#fff", boxShadow: "-8px 0 32px rgba(0,0,0,0.18)" }}
-        onClick={(e) => e.stopPropagation()}>
+      <div className="ml-auto w-full max-w-[420px] h-full overflow-y-auto flex flex-col" style={{ background: "#fff", boxShadow: "-8px 0 32px rgba(0,0,0,0.18)" }}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog" aria-modal="true" aria-label="Reservation details">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between gap-3 px-4 sm:px-5 py-4 border-b border-gray-100">
           <p className="font-bold text-gray-900 text-sm">Reservation Details</p>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-gray-100">
+          <button onClick={onClose} aria-label="Close details panel" className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 shrink-0">
             <X size={14} className="text-gray-500" />
           </button>
         </div>
 
         {/* Book + member hero */}
-        <div className="px-5 py-5 flex flex-col gap-4">
+        <div className="px-4 sm:px-5 py-5 flex flex-col gap-4">
           {/* Book */}
           <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: "#F5F3FF", border: `1.5px solid ${PUR}22` }}>
             <div className="w-10 h-14 rounded flex items-center justify-center text-white font-extrabold text-xl shrink-0"
@@ -255,18 +264,21 @@ function NotifyModal({ records, onConfirm, onClose }: {
     return [...map.values()];
   }, [records]);
 
+  useDialogA11y(true, onClose);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }}>
-      <div className="rounded-2xl p-6 w-full max-w-md" style={{ background: "#fff", boxShadow: "0 20px 60px rgba(0,0,0,0.25)" }}>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "#FFF7ED" }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto" style={{ background: "rgba(0,0,0,0.45)" }}
+      role="dialog" aria-modal="true" aria-label="Notify next member">
+      <div className="rounded-2xl p-5 sm:p-6 w-full max-w-md max-h-[85vh] overflow-y-auto my-auto" style={{ background: "#fff", boxShadow: "0 20px 60px rgba(0,0,0,0.25)" }}>
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#FFF7ED" }}>
             <Bell size={20} style={{ color: "#D97706" }} />
           </div>
-          <div>
+          <div className="min-w-0 flex-1">
             <p className="font-bold text-gray-900">Notify Next Member</p>
             <p className="text-xs text-gray-400">Select which book queue to notify</p>
           </div>
-          <button onClick={onClose} className="ml-auto w-7 h-7 rounded-lg flex items-center justify-center hover:bg-gray-100">
+          <button onClick={onClose} aria-label="Close dialog" className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 shrink-0">
             <X size={14} className="text-gray-500" />
           </button>
         </div>
@@ -410,12 +422,12 @@ export default function ReservationManagementPage() {
   const activeFilters = (statusFilter ? 1 : 0) + (typeFilter ? 1 : 0);
 
   return (
-    <div className="p-6 flex flex-col gap-5" style={{ fontFamily: "'Inter',sans-serif" }}>
+    <div className="p-4 sm:p-6 flex flex-col gap-5" style={{ fontFamily: "'Inter',sans-serif" }}>
 
       {/* ── Toast ── */}
       {toast && (
-        <div className="fixed top-5 right-5 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-xl animate-in"
-          style={{ background: "#1F2937", color: "#fff", fontSize: 13, fontWeight: 500, minWidth: 300 }}>
+        <div className="fixed top-4 left-4 right-4 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-xl animate-in sm:top-5 sm:left-auto sm:right-5 sm:min-w-[300px]"
+          style={{ background: "#1F2937", color: "#fff", fontSize: 13, fontWeight: 500 }}>
           {toast.ok !== false
             ? <CheckCircle2 size={15} style={{ color: "#10B981", flexShrink: 0 }} />
             : <AlertTriangle size={15} style={{ color: "#F87171", flexShrink: 0 }} />
@@ -436,27 +448,27 @@ export default function ReservationManagementPage() {
       )}
 
       {/* ── Page Header ── */}
-      <div className="flex items-start justify-between">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="font-extrabold text-xl text-gray-900">Reservation Management</h1>
           <p className="text-xs text-gray-400 mt-0.5">Library Catalog › Borrowing › Reservations</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setShowNotify(true)}
-            className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl transition-all hover:opacity-90"
+            className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl transition-all hover:opacity-90 whitespace-nowrap"
             style={{ background: "#FFF7ED", color: "#D97706", border: "1px solid #FDE68A" }}>
             <Bell size={14} /> Notify Next Member
           </button>
           <button
-            className="flex items-center gap-1.5 text-sm font-semibold text-gray-600 px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50">
+            className="flex items-center gap-1.5 text-sm font-semibold text-gray-600 px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 whitespace-nowrap">
             <Download size={14} /> Export
           </button>
         </div>
       </div>
 
       {/* ── Stat Cards ── */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(4,1fr)" }}>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {STAT_CARDS.map((s) => (
           <StatCard key={s.label} {...s} loading={statsLoading} />
         ))}
@@ -469,7 +481,7 @@ export default function ReservationManagementPage() {
         <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 flex-wrap">
 
           {/* Search */}
-          <div className="relative flex-1" style={{ minWidth: 220, maxWidth: 340 }}>
+          <div className="relative w-full sm:w-auto sm:flex-1 sm:min-w-[220px] sm:max-w-[340px]">
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               value={search}
@@ -496,8 +508,8 @@ export default function ReservationManagementPage() {
               <ChevronDown size={12} style={{ transform: filterOpen ? "none" : "rotate(-90deg)", transition: "transform .2s" }} />
             </button>
             {filterOpen && (
-              <div className="absolute top-10 left-0 z-30 rounded-xl border border-gray-100 p-4 flex flex-col gap-3"
-                style={{ background: "#fff", boxShadow: "0 8px 32px rgba(0,0,0,0.12)", width: 280 }}>
+              <div className="absolute top-10 left-0 z-30 rounded-xl border border-gray-100 p-4 flex flex-col gap-3 w-[min(280px,calc(100vw-3rem))]"
+                style={{ background: "#fff", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-semibold text-gray-600">Status</label>
                   <div className="flex flex-wrap gap-1.5">
@@ -562,7 +574,7 @@ export default function ReservationManagementPage() {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
+        <div className="table-scroll">
           <table className="w-full text-sm" style={{ borderCollapse: "collapse", minWidth: 960 }}>
             <thead>
               <tr style={{ background: "#FAFAFA", borderBottom: "1px solid #F3F4F6" }}>
