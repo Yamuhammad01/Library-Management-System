@@ -7,9 +7,10 @@ const PUR = "#6D28D9";
 interface LoginPageProps {
   onLogin: (user: { name: string; role: string; email: string }) => void;
   onGoToRegister: () => void;
+  onGoToWelcome?: () => void;
 }
 
-export default function LoginPage({ onLogin, onGoToRegister }: LoginPageProps) {
+export default function LoginPage({ onLogin, onGoToRegister, onGoToWelcome }: LoginPageProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -245,6 +246,26 @@ export default function LoginPage({ onLogin, onGoToRegister }: LoginPageProps) {
               Don't have an account? Register here
             </button>
           </div>
+
+          {/* Back to Welcome */}
+          {onGoToWelcome && (
+            <div style={{ marginTop: 8, textAlign: "center" }}>
+              <button
+                onClick={onGoToWelcome}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#9CA3AF",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  fontSize: 12,
+                  padding: 0,
+                }}
+              >
+                ← Back to Welcome
+              </button>
+            </div>
+          )}
 
           
         </div>

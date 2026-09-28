@@ -62,7 +62,7 @@ const SEED_BOOKS = [
 ];
 
 const SEED_MEMBERS = [
-  { id:"STU-2024-0042", name:"Emily Chen",        type:"student", department:"Computer Science", activeLoans:2, email:"e.chen@uni.edu"       },
+  { id:"STU-2024-0042", name:"Emily Chen",       type:"student", department:"Computer Science", activeLoans:2, email:"e.chen@uni.edu"       },
   { id:"STU-2024-0087", name:"James Wilson",      type:"student", department:"Biology",          activeLoans:1, email:"j.wilson@uni.edu"     },
   { id:"STF-2024-0012", name:"Aisha Rahman",      type:"staff",   department:"Library Services", activeLoans:1, email:"a.rahman@uni.edu"     },
   { id:"STU-2024-0156", name:"Michael Torres",    type:"student", department:"Economics",        activeLoans:1, email:"m.torres@uni.edu"     },
@@ -98,22 +98,23 @@ async function seed() {
   try {
     await connectDB();
 
-    // Clear existing data
+    // ─── Clear existing collection data ───
     await Book.deleteMany({});
     await Member.deleteMany({});
     await BorrowRecord.deleteMany({});
+    await User.deleteMany({});
 
-    console.log("Cleared existing data.");
+    console.log("Cleared existing data from all collections.");
 
-    // Insert books
+    // ───  Insert books ───
     const books = await Book.insertMany(SEED_BOOKS);
     console.log(`Inserted ${books.length} books.`);
 
-    // Insert members
+    // ─── Insert members ───
     const members = await Member.insertMany(SEED_MEMBERS);
     console.log(`Inserted ${members.length} members.`);
 
-    // Build borrow records with actual book ObjectIds
+    // ───  Insert borrow records ───
     const borrowRecords = SEED_BORROW_RECORDS.map((r) => {
       const book = books[r.bookIndex];
       return {
@@ -131,27 +132,28 @@ async function seed() {
       };
     });
 
-    const inserted = await BorrowRecord.insertMany(borrowRecords);
-    console.log(`Inserted ${inserted.length} borrow records.`);
+    const insertedRecords = await BorrowRecord.insertMany(borrowRecords);
+    console.log(`Inserted ${insertedRecords.length} borrow records.`);
 
-    // Seed users
-    await User.deleteMany({});
+    // ───  Insert users ───
+    // Assigned memberId strings to Librarian/Admin to prevent MongoDB duplicate null key error
     const seededUsers = [
-      { fullName: "Sarah Johnson", email: "librarian@unilib.edu", password: "password123", role: "Librarian" },
-      { fullName: "Admin User", email: "admin@unilib.edu", password: "admin123", role: "Admin" },
-      { fullName: "Emily Chen", email: "emily@unilib.edu", password: "password123", role: "LibraryMember", memberId: "STU-2024-0042", memberType: "student", department: "Computer Science" },
+      { fullName: "Muhammad I.", email: "librarian@unilib.edu", password: "Library123", role: "Librarian", memberId: "LIB-0001" },
+      { fullName: "Admin User", email: "admin@unilib.edu", password: "admin123", role: "Admin", memberId: "ADM-0001" },
+      { fullName: "Abdul S.", email: "as@unilib.edu", password: "Library123", role: "LibraryMember", memberId: "STU-2024-0042", memberType: "student", department: "Computer Science" },
       { fullName: "Kevin Liu", email: "kevin@unilib.edu", password: "password123", role: "LibraryMember", memberId: "STU-2024-0055", memberType: "student", department: "Medicine" },
     ];
+
     for (const u of seededUsers) {
       await User.create(u);
     }
-    console.log(`Inserted ${seededUsers.length} users (Librarian + Admin + LibraryMembers).`);
+    console.log(`Inserted ${seededUsers.length} users.`);
 
     console.log("\n Seed completed successfully!");
-    console.log("Librarian login:  librarian@unilib.edu / password123");
-    console.log(" Admin login:      admin@unilib.edu / admin123");
-    console.log(" Member (Emily):   emily@unilib.edu / password123");
-    console.log(" Member (Kevin):   kevin@unilib.edu / password123");
+    console.log("Librarian login:  librarian@unilib.edu / Library123");
+    console.log("Admin login:      admin@unilib.edu / admin123");
+    console.log("Member (Abdul):   as@unilib.edu / Library123");
+    console.log("Member (Kevin):   kevin@unilib.edu / password123");
     process.exit(0);
   } catch (err) {
     console.error(" Seed failed:", err);

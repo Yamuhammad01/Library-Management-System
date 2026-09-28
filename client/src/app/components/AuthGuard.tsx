@@ -9,6 +9,8 @@ import {
 import { queryClient } from "../services/queryClient";
 import { BookOpen } from "lucide-react";
 
+type UnauthPage = "welcome" | "login" | "register";
+
 const PUR = "#6D28D9";
 
 interface User {
@@ -44,7 +46,7 @@ type AuthState =
  */
 export default function AuthGuard({ children, onLogout }: AuthGuardProps) {
   const [authState, setAuthState] = useState<AuthState>({ status: "loading" });
-  const [showRegister, setShowRegister] = useState(false);
+  const [unauthPage, setUnauthPage] = useState<UnauthPage>("welcome");
 
   // Keep the owner callback in a ref so `logout` stays referentially stable.
   const onLogoutRef = useRef(onLogout);
@@ -63,7 +65,7 @@ export default function AuthGuard({ children, onLogout }: AuthGuardProps) {
 
     clearAuthToken();
     queryClient.clear(); // never leak the previous session's cached data
-    setShowRegister(false);
+    setUnauthPage("welcome");
     setAuthState({ status: "unauthenticated" });
     onLogoutRef.current?.();
 
@@ -117,7 +119,7 @@ export default function AuthGuard({ children, onLogout }: AuthGuardProps) {
 
   const handleLogin = (user: User) => {
     setAuthState({ status: "authenticated", user });
-    setShowRegister(false);
+    setUnauthPage("welcome");
   };
 
   // ─── Loading State ───
@@ -151,11 +153,14 @@ export default function AuthGuard({ children, onLogout }: AuthGuardProps) {
     );
   }
 
-  // ─── Unauthenticated State → Show Login/Register ───
+  // ─── Unauthenticated State → Show Welcome/Login/Register ───
   if (authState.status === "unauthenticated") {
     // Dynamically import to avoid circular deps
     const LoginPage = lazy(() => import("../LoginPage"));
     const RegisterPage = lazy(() => import("../RegisterPage"));
+    const WelcomePageModule = lazy(() =>
+      import("../pages/WelcomePage").then((m) => ({ default: m.WelcomePage as React.ComponentType<any> }))
+    );
 
     return (
       <Suspense
@@ -165,10 +170,73 @@ export default function AuthGuard({ children, onLogout }: AuthGuardProps) {
           </div>
         }
       >
-        {showRegister ? (
-          <RegisterPage onBackToLogin={() => setShowRegister(false)} />
+        {unauthPage === "register" ? (
+          <RegisterPage onBackToLogin={() => setUnauthPage("welcome")} />
+        ) : unauthPage === "login" ? (
+          <LoginPage
+            onLogin={handleLogin}
+            onGoToRegister={() => setUnauthPage("register")}
+            onGoToWelcome={() => setUnauthPage("welcome")}
+          />
         ) : (
-          <LoginPage onLogin={handleLogin} onGoToRegister={() => setShowRegister(true)} />
+          /* Welcome Page — wrapped in the same branded split layout as Login */
+          <div
+            className="app-screen flex items-center justify-center p-3 sm:p-6"
+            style={{
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              fontFamily: "'Inter', sans-serif",
+            }}
+          >
+            <div
+              className="flex flex-col md:flex-row rounded-2xl sm:rounded-3xl overflow-hidden w-full max-w-4xl"
+              style={{ boxShadow: "0 25px 60px rgba(0,0,0,0.3)" }}
+            >
+              {/* Left panel – branding */}
+              <div
+                className="p-6 sm:p-8 md:p-12 flex flex-col justify-center text-white"
+                style={{ flex: "1 1 0%", background: `linear-gradient(145deg, ${PUR}, #4C1D95)` }}
+              >
+                <div
+                  className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center mb-4 md:mb-6"
+                  style={{ background: "rgba(255,255,255,0.15)" }}
+                >
+                  <BookOpen size={26} color="#fff" strokeWidth={2.5} />
+                </div>
+                <h1 className="text-2xl md:text-3xl font-extrabold m-0 leading-tight">
+                  UniLib
+                </h1>
+                <p className="text-xs sm:text-sm opacity-80 mt-2 leading-relaxed">
+                  University Library Management System. Access the complete library
+                  catalog, manage borrowings, and track resources.
+                </p>
+                <div className="hidden md:flex flex-col gap-3 mt-8">
+                  {[
+                    "24,856+ books in catalog",
+                    "Real-time borrowing management",
+                    "Multi-user role support",
+                  ].map((text) => (
+                    <div key={text} className="flex items-center gap-2.5 opacity-85">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M13.3 4.7L6.3 11.7L2.7 8.1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <span className="text-xs sm:text-sm">{text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right panel – WelcomePage content */}
+              <div
+                className="bg-white p-6 sm:p-8 md:p-10 flex flex-col justify-center"
+                style={{ flex: "1 1 0%" }}
+              >
+                <WelcomePageModule
+                  onNavigate={(page: "login" | "register") => setUnauthPage(page)}
+                  onLogin={handleLogin}
+                />
+              </div>
+            </div>
+          </div>
         )}
       </Suspense>
     );
